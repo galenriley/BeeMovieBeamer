@@ -1,8 +1,4 @@
 #include <Arduino.h>
-
-
-// The first time you need to define the board model and version
-
 #define T4_V13
 
 #if defined(T4_V13)
@@ -14,7 +10,6 @@
 
 #include <TFT_eSPI.h>
 #include <SPI.h>
-#include "WiFi.h"
 #include <Wire.h>
 #include <Ticker.h>
 #include <Button2.h>
@@ -22,10 +17,27 @@
 
 TFT_eSPI tft = TFT_eSPI(); // Invoke custom library
 
-#ifdef ENABLE_MPU9250
-#include "sensor.h"
-extern MPU9250 IMU;
+// used for GifDraw logic
+// https://github.com/bitbank2/AnimatedGIF/blob/master/examples/TFT_eSPI_memory/GIFDraw.ino
+#define DISPLAY_WIDTH  tft.width()
+#define DISPLAY_HEIGHT tft.height()
+#define BUFFER_SIZE 320 // Optimum is >= GIF width or integral division of width
+#ifdef USE_DMA
+  uint16_t usTemp[2][BUFFER_SIZE]; // Global to support DMA use
+#else
+  uint16_t usTemp[1][BUFFER_SIZE];    // Global to support DMA use
 #endif
+bool dmaBuf = 0;
+
+#include <AnimatedGIF.h>
+AnimatedGIF gif;
+
+//#include <beemovie_wide.h>
+//int yOffset = 35; // custom offset for vertical positioning
+#include <beemovie_full.h>
+int yOffset = 0; // custom offset for vertical positioning
+#define GIF_IMAGE beemovie
+
 
 SPIClass sdSPI(VSPI);
 #define IP5306_ADDR         0X75
@@ -37,6 +49,120 @@ Button2 *pBtns = nullptr;
 uint8_t g_btns[] =  BUTTONS_MAP;
 char buff[512];
 Ticker btnscanT;
+
+void GIFDraw(GIFDRAW *pDraw)
+{
+  uint8_t *s;
+  uint16_t *d, *usPalette;
+  int x, y, iWidth, iCount;
+
+  // Display bounds check and cropping
+  iWidth = pDraw->iWidth;
+  if (iWidth + pDraw->iX > DISPLAY_WIDTH)
+    iWidth = DISPLAY_WIDTH - pDraw->iX;
+  usPalette = pDraw->pPalette;
+  y = pDraw->iY + pDraw->y + yOffset; // current line
+  if (y >= DISPLAY_HEIGHT || pDraw->iX >= DISPLAY_WIDTH || iWidth < 1)
+    return;
+
+  // Old image disposal
+  s = pDraw->pPixels;
+  if (pDraw->ucDisposalMethod == 2) // restore to background color
+  {
+    for (x = 0; x < iWidth; x++)
+    {
+      if (s[x] == pDraw->ucTransparent)
+        s[x] = pDraw->ucBackground;
+    }
+    pDraw->ucHasTransparency = 0;
+  }
+
+  // Apply the new pixels to the main image
+  if (pDraw->ucHasTransparency) // if transparency used
+  {
+    uint8_t *pEnd, c, ucTransparent = pDraw->ucTransparent;
+    pEnd = s + iWidth;
+    x = 0;
+    iCount = 0; // count non-transparent pixels
+    while (x < iWidth)
+    {
+      c = ucTransparent - 1;
+      d = &usTemp[0][0];
+      while (c != ucTransparent && s < pEnd && iCount < BUFFER_SIZE )
+      {
+        c = *s++;
+        if (c == ucTransparent) // done, stop
+        {
+          s--; // back up to treat it like transparent
+        }
+        else // opaque
+        {
+          *d++ = usPalette[c];
+          iCount++;
+        }
+      } // while looking for opaque pixels
+      if (iCount) // any opaque pixels?
+      {
+        // DMA would degrtade performance here due to short line segments
+        tft.setAddrWindow(pDraw->iX + x, y, iCount, 1);
+        tft.pushPixels(usTemp, iCount);
+        x += iCount;
+        iCount = 0;
+      }
+      // no, look for a run of transparent pixels
+      c = ucTransparent;
+      while (c == ucTransparent && s < pEnd)
+      {
+        c = *s++;
+        if (c == ucTransparent)
+          x++;
+        else
+          s--;
+      }
+    }
+  }
+  else
+  {
+    s = pDraw->pPixels;
+
+    // Unroll the first pass to boost DMA performance
+    // Translate the 8-bit pixels through the RGB565 palette (already byte reversed)
+    if (iWidth <= BUFFER_SIZE)
+      for (iCount = 0; iCount < iWidth; iCount++) usTemp[dmaBuf][iCount] = usPalette[*s++];
+    else
+      for (iCount = 0; iCount < BUFFER_SIZE; iCount++) usTemp[dmaBuf][iCount] = usPalette[*s++];
+
+#ifdef USE_DMA // 71.6 fps (ST7796 84.5 fps)
+    tft.dmaWait();
+    tft.setAddrWindow(pDraw->iX, y, iWidth, 1);
+    tft.pushPixelsDMA(&usTemp[dmaBuf][0], iCount);
+    dmaBuf = !dmaBuf;
+#else // 57.0 fps
+    tft.setAddrWindow(pDraw->iX, y, iWidth, 1);
+    tft.pushPixels(&usTemp[0][0], iCount);
+#endif
+
+    iWidth -= iCount;
+    // Loop if pixel buffer smaller than width
+    while (iWidth > 0)
+    {
+      // Translate the 8-bit pixels through the RGB565 palette (already byte reversed)
+      if (iWidth <= BUFFER_SIZE)
+        for (iCount = 0; iCount < iWidth; iCount++) usTemp[dmaBuf][iCount] = usPalette[*s++];
+      else
+        for (iCount = 0; iCount < BUFFER_SIZE; iCount++) usTemp[dmaBuf][iCount] = usPalette[*s++];
+
+#ifdef USE_DMA
+      tft.dmaWait();
+      tft.pushPixelsDMA(&usTemp[dmaBuf][0], iCount);
+      dmaBuf = !dmaBuf;
+#else
+      tft.pushPixels(&usTemp[0][0], iCount);
+#endif
+      iWidth -= iCount;
+    }
+  }
+} /* GIFDraw() */
 
 bool setPowerBoostKeepOn(int en)
 {
@@ -102,11 +228,9 @@ void button_init()
         pBtns[i] = Button2(g_btns[i]);
         pBtns[i].setPressedHandler(button_callback);
     }
-#if defined(T10_V18) || defined(T4_V13) ||defined(T10_V20) || defined(T10_V14)
-#if defined(T10_V18) || defined(T4_V13)|| defined(T10_V14)
+#if defined(T4_V13)
+#if defined(T4_V13)
     pBtns[0].setLongClickHandler([](Button2 & b) {
-#elif defined(T10_V20)
-    pBtns[1].setLongClickHandler([](Button2 & b) {
 #endif
 
         int x = tft.width() / 2 ;
@@ -116,20 +240,8 @@ void button_init()
         tft.setTextColor(TFT_GREEN, TFT_BLACK);
         tft.setTextDatum(MC_DATUM);
         tft.fillScreen(TFT_BLACK);
-#if defined(T10_V14)
-        tft.drawString(r ? "Backlight OFF" : "Backlight ON", x, y);
-        tft.drawString("IP5306 KeepOn ", x - 20, y + 30);
-
-        bool isOk = setPowerBoostKeepOn(1);
-        tft.setTextColor(isOk ? TFT_GREEN : TFT_RED, TFT_BLACK);
-        tft.drawString( isOk ? "PASS" : "FAIL", x + 50, y + 30);
-        y += 30;
-#endif
         tft.setTextColor(TFT_GREEN, TFT_BLACK);
         tft.drawString("Press again to wake up", x - 20, y + 30);
-#ifdef ENABLE_MPU9250
-        IMU.setSleepEnabled(true);
-#endif
 
 #ifndef ST7735_SLPIN
 #define ST7735_SLPIN   0x10
@@ -174,7 +286,6 @@ void spisd_test() {
     }
 }
 
-
 void playSound(void) {
     if (SPEAKER_OUT > 0) {
         if (SPEAKER_PWD > 0) {
@@ -187,49 +298,6 @@ void playSound(void) {
         if (SPEAKER_PWD > 0) {
             delay(200);
             digitalWrite(SPEAKER_PWD, LOW);
-        }
-    }
-}
-
-void buzzer_test() {
-    if (SPEAKER_OUT > 0) {
-        if (SPEAKER_PWD > 0) {
-            pinMode(SPEAKER_PWD, OUTPUT);
-        }
-        ledcSetup(CHANNEL_0, 1000, 8);
-        ledcAttachPin(SPEAKER_OUT, CHANNEL_0);
-    }
-}
-
-
-
-void wifi_scan() {
-    tft.setTextColor(TFT_GREEN, TFT_BLACK);
-    tft.fillScreen(TFT_BLACK);
-    tft.setTextDatum(MC_DATUM);
-    tft.setTextSize(1);
-
-    tft.drawString("Scan Network", tft.width() / 2, tft.height() / 2);
-
-    WiFi.mode(WIFI_STA);
-    WiFi.disconnect();
-    delay(100);
-
-    int16_t n = WiFi.scanNetworks();
-    tft.fillScreen(TFT_BLACK);
-    if (n == 0) {
-        tft.drawString("no networks found", tft.width() / 2, tft.height() / 2);
-    } else {
-        tft.setTextDatum(TL_DATUM);
-        tft.setCursor(0, 0);
-        Serial.printf("Fount %d net\n", n);
-        for (int i = 0; i < n; ++i) {
-            sprintf(buff,
-                    "[%d]:%s(%d)",
-                    i + 1,
-                    WiFi.SSID(i).c_str(),
-                    WiFi.RSSI(i));
-            tft.println(buff);
         }
     }
 }
@@ -314,9 +382,8 @@ void setup() {
 // // //!
 
     tft.init();
-    tft.setRotation(0);
+    tft.setRotation(3);
     tft.fillScreen(TFT_BLACK);
-    tft.setTextSize(1);
     tft.setTextColor(TFT_WHITE);
     tft.setCursor(0, 0);
 
@@ -325,19 +392,22 @@ void setup() {
         digitalWrite(TFT_BL, HIGH);
     }
 
-    spisd_test();
-    buzzer_test();
+    //spisd_test();
     button_init();
     tft.setTextFont(1);
-    tft.setTextSize(1);
+    //tft.setTextSize(1);
+
+    tft.setTextSize(4);
+    tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
+    tft.setTextDatum(MC_DATUM);
+    tft.drawString("hey disciples", tft.width() / 2, tft.height() / 2);
 
     if (I2C_SDA > 0) {
         Wire.begin(I2C_SDA, I2C_SCL);
-#ifdef ENABLE_MPU9250
-        setupMPU9250();
-#endif
     }
     btnscanT.attach_ms(30, button_loop);
+
+    gif.begin(BIG_ENDIAN_PIXELS);
 }
 
 
@@ -345,44 +415,35 @@ void loop() {
     switch (state) {
     case 1:
         state = 0;
-        wifi_scan();
+        digitalWrite(TFT_BL, HIGH); // enable TFT backlight
+        if (gif.open((uint8_t *)GIF_IMAGE, sizeof(GIF_IMAGE), GIFDraw))
+        {
+            Serial.printf("Successfully opened GIF; Canvas size = %d x %d\n", gif.getCanvasWidth(), gif.getCanvasHeight());
+            tft.startWrite(); // The TFT chip select is locked low
+            while (gif.playFrame(true, NULL))
+            {
+                yield();
+            }
+            gif.close();
+            tft.endWrite(); // Release TFT chip select for other SPI devices
+        }
+        tft.fillScreen(TFT_BLACK);
+        digitalWrite(TFT_BL, LOW); // disable TFT backlight
         break;
     case 2:
         state = 0;
         tft.setTextColor(TFT_GREEN, TFT_BLACK);
         tft.fillScreen(TFT_BLACK);
         tft.setTextDatum(MC_DATUM);
-#ifdef T4_V12
         tft.drawString("Undefined function", tft.width() / 2, tft.height() / 2);
-#else
-        tft.drawString("Buzzer Test", tft.width() / 2, tft.height() / 2);
-        playSound();
-#endif
         break;
     case 3:
-#ifdef ENABLE_MPU9250
-
-        tft.setTextColor(TFT_GREEN, TFT_BLACK);
-        tft.fillScreen(TFT_BLACK);
-        tft.setTextDatum(TL_DATUM);
-        readMPU9250();
-
-        snprintf(buff, sizeof(buff), "--  ACC GYR MAG");
-        tft.drawString(buff, 0, 0);
-        snprintf(buff, sizeof(buff), "x %.2f  %.2f  %.2f", (int)1000 * IMU.ax, IMU.gx, IMU.mx);
-        tft.drawString(buff, 0, 16);
-        snprintf(buff, sizeof(buff), "y %.2f  %.2f  %.2f", (int)1000 * IMU.ay, IMU.gy, IMU.my);
-        tft.drawString(buff, 0, 32);
-        snprintf(buff, sizeof(buff), "z %.2f  %.2f  %.2f", (int)1000 * IMU.az, IMU.gz, IMU.mz);
-        tft.drawString(buff, 0, 48);
-        delay(200);
-#else
         state = 0;
         listDir(SD, "/", 2);
-#endif
         break;
     case 4:
         state = 0;
+        tft.setTextColor(TFT_GREEN, TFT_BLACK);
         tft.fillScreen(TFT_BLACK);
         tft.setTextDatum(MC_DATUM);
         tft.drawString("Undefined function", tft.width() / 2, tft.height() / 2);
