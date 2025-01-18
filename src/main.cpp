@@ -15,7 +15,8 @@
 #include <Button2.h>
 #include <SD.h>
 
-TFT_eSPI tft = TFT_eSPI(); // Invoke custom library
+TFT_eSPI tft = TFT_eSPI();
+int tftRotation = 1;
 
 // used for GifDraw logic
 // https://github.com/bitbank2/AnimatedGIF/blob/master/examples/TFT_eSPI_memory/GIFDraw.ino
@@ -37,6 +38,8 @@ AnimatedGIF gif;
 #include <beemovie_full.h>
 int yOffset = 0; // custom offset for vertical positioning
 #define GIF_IMAGE beemovie
+
+int font_id = 1;
 
 
 SPIClass sdSPI(VSPI);
@@ -382,7 +385,7 @@ void setup() {
 // // //!
 
     tft.init();
-    tft.setRotation(3);
+    tft.setRotation(tftRotation);
     tft.fillScreen(TFT_BLACK);
     tft.setTextColor(TFT_WHITE);
     tft.setCursor(0, 0);
@@ -397,10 +400,19 @@ void setup() {
     tft.setTextFont(1);
     //tft.setTextSize(1);
 
-    tft.setTextSize(4);
+    tft.setTextSize(1);
     tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
-    tft.setTextDatum(MC_DATUM);
-    tft.drawString("hey disciples", tft.width() / 2, tft.height() / 2);
+    tft.setTextDatum(TL_DATUM);
+    tft.setCursor(0, 0);
+    tft.println("hey disciples, has anyone seen The Bee Movie?");
+    tft.println("    - a gift for Junior");
+    tft.println();
+    tft.println("project info at https://github.com/galenriley/BeeMovieBeamer");
+    tft.println();
+    tft.println("based on an IG reel by @dungeons.and.dragon.memes that got stuck in my head");
+    tft.println("with thanks to Don Sayers and Becca Bryan");
+    tft.println();
+    tft.println("[put battery info here]");
 
     if (I2C_SDA > 0) {
         Wire.begin(I2C_SDA, I2C_SCL);
@@ -432,10 +444,13 @@ void loop() {
         break;
     case 2:
         state = 0;
-        tft.setTextColor(TFT_GREEN, TFT_BLACK);
         tft.fillScreen(TFT_BLACK);
+        tft.setTextFont(font_id);
+        tft.setTextSize(3);
+        tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
         tft.setTextDatum(MC_DATUM);
-        tft.drawString("Undefined function", tft.width() / 2, tft.height() / 2);
+        tft.drawString("font " + String(font_id), tft.width() / 2, tft.height() / 2);
+        font_id++;
         break;
     case 3:
         state = 0;
@@ -443,10 +458,28 @@ void loop() {
         break;
     case 4:
         state = 0;
+        /*
         tft.setTextColor(TFT_GREEN, TFT_BLACK);
         tft.fillScreen(TFT_BLACK);
         tft.setTextDatum(MC_DATUM);
         tft.drawString("Undefined function", tft.width() / 2, tft.height() / 2);
+        */
+        
+        digitalWrite(TFT_BL, HIGH); // enable TFT backlight
+        if (1 == tftRotation)
+            tftRotation = 3;
+        else if (3 == tftRotation)
+            tftRotation = 1;
+        tft.setRotation(tftRotation);
+        tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
+        tft.fillScreen(TFT_BLACK);
+        tft.setTextDatum(MC_DATUM);
+        tft.setTextSize(3);
+        tft.drawString("tftRotation " + String(tftRotation), tft.width() / 2, tft.height() / 2);
+        delay(3000);
+        tft.fillScreen(TFT_BLACK);
+        digitalWrite(TFT_BL, LOW); // disable TFT backlight
+
         break;
     default:
         break;
