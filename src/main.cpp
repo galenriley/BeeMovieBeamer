@@ -400,19 +400,31 @@ void setup() {
     tft.setTextFont(1);
     //tft.setTextSize(1);
 
-    tft.setTextSize(1);
+    tft.setTextSize(2);
     tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
     tft.setTextDatum(TL_DATUM);
     tft.setCursor(0, 0);
     tft.println("hey disciples, has anyone seen The Bee Movie?");
-    tft.println("    - a gift for Junior");
     tft.println();
-    tft.println("project info at https://github.com/galenriley/BeeMovieBeamer");
+    tft.println("a gift for Junior");
+
+    tft.setTextDatum(ML_DATUM); // for some reason this isn't working
+    tft.setTextColor(TFT_CYAN, TFT_BLACK);
+    tft.setTextSize(1);
     tft.println();
-    tft.println("based on an IG reel by @dungeons.and.dragon.memes that got stuck in my head");
-    tft.println("with thanks to Don Sayers and Becca Bryan");
     tft.println();
-    tft.println("[put battery info here]");
+    tft.println();
+    tft.println();
+    tft.println("project info:");
+    tft.println("https://github.com/galenriley/BeeMovieBeamer");
+    tft.println("with help from Becca and Don");
+    tft.println();
+    tft.println("based on an IG reel by @dungeons.and.dragon.memes");
+    
+    tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
+    tft.setTextDatum(BL_DATUM); // for some reason this isn't working
+    tft.setTextSize(2);
+    tft.drawString("[put battery info here]", 0, tft.height());
 
     if (I2C_SDA > 0) {
         Wire.begin(I2C_SDA, I2C_SCL);
