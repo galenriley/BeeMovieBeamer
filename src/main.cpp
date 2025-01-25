@@ -1,181 +1,151 @@
 #include <Arduino.h>
-#define T4_V13
-
-#if defined(T4_V13)
-#include "T4_V13.h"
-#else
-#error "please select board version"
-#endif
-
-
 #include <TFT_eSPI.h>
 #include <SPI.h>
 #include <Wire.h>
 #include <Ticker.h>
 #include <Button2.h>
-#include <SD.h>
-
-TFT_eSPI tft = TFT_eSPI();
-int tftRotation = 1;
-
-// used for GifDraw logic
-// https://github.com/bitbank2/AnimatedGIF/blob/master/examples/TFT_eSPI_memory/GIFDraw.ino
-#define DISPLAY_WIDTH  tft.width()
-#define DISPLAY_HEIGHT tft.height()
-#define BUFFER_SIZE 320 // Optimum is >= GIF width or integral division of width
-#ifdef USE_DMA
-  uint16_t usTemp[2][BUFFER_SIZE]; // Global to support DMA use
-#else
-  uint16_t usTemp[1][BUFFER_SIZE];    // Global to support DMA use
-#endif
-bool dmaBuf = 0;
-
+//#include <IP5306_I2C.h>
 #include <AnimatedGIF.h>
-AnimatedGIF gif;
 
 //#include <beemovie_wide.h>
-//int yOffset = 35; // custom offset for vertical positioning
 #include <beemovie_full.h>
+
+#define T4_V13
+#if defined(T4_V13)
+#include "T4_V13.h"
+#endif
+
+#define ST7735_SLPIN 0x10
+#define ST7735_SLPOUT 0x11
+#define ST7735_DISPOFF 0x28
+#define ST7735_DISPON 0x29
+
+
+TFT_eSPI tft = TFT_eSPI();
+RTC_DATA_ATTR int tftRotation = 1;
+//IP5306 ip5306 = IP5306(I2C_SDA,I2C_SCL);
+
+AnimatedGIF gif;
+
+//int yOffset = 35; // custom offset for vertical positioning
 int yOffset = 0; // custom offset for vertical positioning
 #define GIF_IMAGE beemovie
 
-int font_id = 1;
-
-
-SPIClass sdSPI(VSPI);
-#define IP5306_ADDR         0X75
-#define IP5306_REG_SYS_CTL0 0x00
-
-
 uint8_t state = 0;
+RTC_DATA_ATTR bool hasShownDisplay = false;
+
 Button2 *pBtns = nullptr;
 uint8_t g_btns[] =  BUTTONS_MAP;
-char buff[512];
 Ticker btnscanT;
 
+// adapted from https://github.com/bitbank2/AnimatedGIF/blob/master/examples/TFT_eSPI_memory/GIFDraw.ino
+// added yOffset for setting vertical position
 void GIFDraw(GIFDRAW *pDraw)
 {
-  uint8_t *s;
-  uint16_t *d, *usPalette;
-  int x, y, iWidth, iCount;
+    uint8_t *s;
+    uint16_t *d, *usPalette;
+    int x, y, iWidth, iCount;
 
-  // Display bounds check and cropping
-  iWidth = pDraw->iWidth;
-  if (iWidth + pDraw->iX > DISPLAY_WIDTH)
+    int16_t DISPLAY_WIDTH = tft.width();
+    int16_t DISPLAY_HEIGHT = tft.height();
+
+    int BUFFER_SIZE = 320; // Optimum is >= GIF width or integral division of width
+    uint16_t usTemp[BUFFER_SIZE];    // Global to support DMA use
+
+    // Display bounds check and cropping
+    iWidth = pDraw->iWidth;
+    if (iWidth + pDraw->iX > DISPLAY_WIDTH)
     iWidth = DISPLAY_WIDTH - pDraw->iX;
-  usPalette = pDraw->pPalette;
-  y = pDraw->iY + pDraw->y + yOffset; // current line
-  if (y >= DISPLAY_HEIGHT || pDraw->iX >= DISPLAY_WIDTH || iWidth < 1)
+    usPalette = pDraw->pPalette;
+    y = pDraw->iY + pDraw->y + yOffset; // current line
+    if (y >= DISPLAY_HEIGHT || pDraw->iX >= DISPLAY_WIDTH || iWidth < 1)
     return;
 
-  // Old image disposal
-  s = pDraw->pPixels;
-  if (pDraw->ucDisposalMethod == 2) // restore to background color
-  {
+    // Old image disposal
+    s = pDraw->pPixels;
+    if (pDraw->ucDisposalMethod == 2) // restore to background color
+    {
     for (x = 0; x < iWidth; x++)
     {
-      if (s[x] == pDraw->ucTransparent)
+        if (s[x] == pDraw->ucTransparent)
         s[x] = pDraw->ucBackground;
     }
     pDraw->ucHasTransparency = 0;
-  }
+    }
 
-  // Apply the new pixels to the main image
-  if (pDraw->ucHasTransparency) // if transparency used
-  {
-    uint8_t *pEnd, c, ucTransparent = pDraw->ucTransparent;
-    pEnd = s + iWidth;
-    x = 0;
-    iCount = 0; // count non-transparent pixels
-    while (x < iWidth)
+    // Apply the new pixels to the main image
+    if (pDraw->ucHasTransparency) // if transparency used
     {
-      c = ucTransparent - 1;
-      d = &usTemp[0][0];
-      while (c != ucTransparent && s < pEnd && iCount < BUFFER_SIZE )
-      {
-        c = *s++;
-        if (c == ucTransparent) // done, stop
+        uint8_t *pEnd, c, ucTransparent = pDraw->ucTransparent;
+        pEnd = s + iWidth;
+        x = 0;
+        iCount = 0; // count non-transparent pixels
+        while (x < iWidth)
         {
-          s--; // back up to treat it like transparent
+            c = ucTransparent - 1;
+            d = &usTemp[0];
+            while (c != ucTransparent && s < pEnd && iCount < BUFFER_SIZE )
+            {
+                c = *s++;
+                if (c == ucTransparent) // done, stop
+                {
+                    s--; // back up to treat it like transparent
+                }
+                else // opaque
+                {
+                    *d++ = usPalette[c];
+                    iCount++;
+                }
+            } // while looking for opaque pixels
+            if (iCount) // any opaque pixels?
+            {
+                // DMA would degrtade performance here due to short line segments
+                tft.setAddrWindow(pDraw->iX + x, y, iCount, 1);
+                tft.pushPixels(usTemp, iCount);
+                x += iCount;
+                iCount = 0;
+            }
+            // no, look for a run of transparent pixels
+            c = ucTransparent;
+            while (c == ucTransparent && s < pEnd)
+            {
+                c = *s++;
+                if (c == ucTransparent)
+                    x++;
+                else
+                    s--;
+            }
         }
-        else // opaque
-        {
-          *d++ = usPalette[c];
-          iCount++;
-        }
-      } // while looking for opaque pixels
-      if (iCount) // any opaque pixels?
-      {
-        // DMA would degrtade performance here due to short line segments
-        tft.setAddrWindow(pDraw->iX + x, y, iCount, 1);
-        tft.pushPixels(usTemp, iCount);
-        x += iCount;
-        iCount = 0;
-      }
-      // no, look for a run of transparent pixels
-      c = ucTransparent;
-      while (c == ucTransparent && s < pEnd)
-      {
-        c = *s++;
-        if (c == ucTransparent)
-          x++;
+    }
+    else
+    {
+        s = pDraw->pPixels;
+
+        // Unroll the first pass to boost DMA performance
+        // Translate the 8-bit pixels through the RGB565 palette (already byte reversed)
+        if (iWidth <= BUFFER_SIZE)
+            for (iCount = 0; iCount < iWidth; iCount++) usTemp[iCount] = usPalette[*s++];
         else
-          s--;
-      }
+            for (iCount = 0; iCount < BUFFER_SIZE; iCount++) usTemp[iCount] = usPalette[*s++];
+
+        tft.setAddrWindow(pDraw->iX, y, iWidth, 1);
+        tft.pushPixels(&usTemp[0], iCount);
+
+        iWidth -= iCount;
+        // Loop if pixel buffer smaller than width
+        while (iWidth > 0)
+        {
+            // Translate the 8-bit pixels through the RGB565 palette (already byte reversed)
+            if (iWidth <= BUFFER_SIZE)
+                for (iCount = 0; iCount < iWidth; iCount++) usTemp[iCount] = usPalette[*s++];
+            else
+                for (iCount = 0; iCount < BUFFER_SIZE; iCount++) usTemp[iCount] = usPalette[*s++];
+
+            tft.pushPixels(&usTemp[0], iCount);
+
+            iWidth -= iCount;
+        }
     }
-  }
-  else
-  {
-    s = pDraw->pPixels;
-
-    // Unroll the first pass to boost DMA performance
-    // Translate the 8-bit pixels through the RGB565 palette (already byte reversed)
-    if (iWidth <= BUFFER_SIZE)
-      for (iCount = 0; iCount < iWidth; iCount++) usTemp[dmaBuf][iCount] = usPalette[*s++];
-    else
-      for (iCount = 0; iCount < BUFFER_SIZE; iCount++) usTemp[dmaBuf][iCount] = usPalette[*s++];
-
-#ifdef USE_DMA // 71.6 fps (ST7796 84.5 fps)
-    tft.dmaWait();
-    tft.setAddrWindow(pDraw->iX, y, iWidth, 1);
-    tft.pushPixelsDMA(&usTemp[dmaBuf][0], iCount);
-    dmaBuf = !dmaBuf;
-#else // 57.0 fps
-    tft.setAddrWindow(pDraw->iX, y, iWidth, 1);
-    tft.pushPixels(&usTemp[0][0], iCount);
-#endif
-
-    iWidth -= iCount;
-    // Loop if pixel buffer smaller than width
-    while (iWidth > 0)
-    {
-      // Translate the 8-bit pixels through the RGB565 palette (already byte reversed)
-      if (iWidth <= BUFFER_SIZE)
-        for (iCount = 0; iCount < iWidth; iCount++) usTemp[dmaBuf][iCount] = usPalette[*s++];
-      else
-        for (iCount = 0; iCount < BUFFER_SIZE; iCount++) usTemp[dmaBuf][iCount] = usPalette[*s++];
-
-#ifdef USE_DMA
-      tft.dmaWait();
-      tft.pushPixelsDMA(&usTemp[dmaBuf][0], iCount);
-      dmaBuf = !dmaBuf;
-#else
-      tft.pushPixels(&usTemp[0][0], iCount);
-#endif
-      iWidth -= iCount;
-    }
-  }
-} /* GIFDraw() */
-
-bool setPowerBoostKeepOn(int en)
-{
-    Wire.beginTransmission(IP5306_ADDR);
-    Wire.write(IP5306_REG_SYS_CTL0);
-    if (en)
-        Wire.write(0x37); // Set bit1: 1 enable 0 disable boost keep on
-    else
-        Wire.write(0x35); // 0x37 is default reg value
-    return Wire.endTransmission() == 0;
 }
 
 void button_handle(uint8_t gpio)
@@ -232,6 +202,7 @@ void button_init()
         pBtns[i].setPressedHandler(button_callback);
     }
 #if defined(T4_V13)
+/*
 #if defined(T4_V13)
     pBtns[0].setLongClickHandler([](Button2 & b) {
 #endif
@@ -246,11 +217,6 @@ void button_init()
         tft.setTextColor(TFT_GREEN, TFT_BLACK);
         tft.drawString("Press again to wake up", x - 20, y + 30);
 
-#ifndef ST7735_SLPIN
-#define ST7735_SLPIN   0x10
-#define ST7735_DISPOFF 0x28
-#endif
-
         delay(3000);
         tft.writecommand(ST7735_SLPIN);
         tft.writecommand(ST7735_DISPOFF);
@@ -260,6 +226,7 @@ void button_init()
         esp_sleep_enable_ext1_wakeup(((uint64_t)(((uint64_t)1) << BUTTON_1)), ESP_EXT1_WAKEUP_ALL_LOW);
         esp_deep_sleep_start();
     });
+    */
 #endif
 }
 
@@ -269,144 +236,35 @@ void button_loop() {
     }
 }
 
-void spisd_test() {
-    tft.fillScreen(TFT_BLACK);
-    if (SD_CS >  0) {
-        tft.setTextDatum(MC_DATUM);
-        sdSPI.begin(SD_SCLK, SD_MISO, SD_MOSI, SD_CS);
-        if (!SD.begin(SD_CS, sdSPI)) {
-            tft.setTextFont(2);
-            tft.setTextColor(TFT_RED, TFT_BLACK);
-            tft.drawString("SDCard MOUNT FAIL", tft.width() / 2, tft.height() / 2);
-        } else {
-            uint32_t cardSize = SD.cardSize() / (1024 * 1024);
-            String str = "SDCard Size: " + String(cardSize) + "MB";
-            tft.setTextFont(2);
-            tft.setTextColor(TFT_GREEN, TFT_BLACK);
-            tft.drawString(str, tft.width() / 2, tft.height() / 2);
-        }
-        delay(2000);
+
+void setDisplayEnabled(bool enabled)
+{
+    if (enabled)
+    {
+        tft.fillScreen(TFT_BLACK);
+        tft.writecommand(ST7735_DISPON);
+        //tft.fillScreen(TFT_BLACK);
+        digitalWrite(TFT_BL, TFT_BACKLIGHT_ON);
+    }
+    else
+    {
+        tft.writecommand(ST7735_DISPOFF);
+        digitalWrite(TFT_BL, LOW);
     }
 }
 
-void playSound(void) {
-    if (SPEAKER_OUT > 0) {
-        if (SPEAKER_PWD > 0) {
-            digitalWrite(SPEAKER_PWD, HIGH);
-            delay(200);
-        }
-        ledcWriteTone(CHANNEL_0, 1000);
-        delay(200);
-        ledcWriteTone(CHANNEL_0, 0);
-        if (SPEAKER_PWD > 0) {
-            delay(200);
-            digitalWrite(SPEAKER_PWD, LOW);
-        }
-    }
-}
 
-void listDir(fs::FS & fs, const char *dirname, uint8_t levels) {
-    tft.setTextColor(TFT_GREEN, TFT_BLACK);
+void displayStartupScreen()
+{
     tft.fillScreen(TFT_BLACK);
-    tft.setTextDatum(TL_DATUM);
     tft.setCursor(0, 0);
-
-    tft.println("Listing directory:" + String(dirname));
-
-    File root = fs.open(dirname);
-    if (!root) {
-        tft.println("- failed to open directory");
-        return;
-    }
-    if (!root.isDirectory()) {
-        tft.println(" - not a directory");
-        return;
-    }
-
-    File file = root.openNextFile();
-    while (file) {
-        if (file.isDirectory()) {
-            tft.print("  DIR : ");
-            tft.println(file.name());
-            if (levels) {
-                listDir(fs, file.name(), levels - 1);
-            }
-        } else {
-            tft.print("  FILE: ");
-            tft.print(file.name());
-            tft.print("  SIZE: ");
-            tft.println(file.size());
-        }
-        file = root.openNextFile();
-    }
-}
-
-void setup() {
-    Serial.begin(115200);
-    delay(1000);
-
-    //Pin out Dump
-    Serial.printf("Current select %s version\n", BOARD_VRESION);
-    Serial.printf("TFT_MISO:%d\n", TFT_MISO);
-    Serial.printf("TFT_MOSI:%d\n", TFT_MOSI);
-    Serial.printf("TFT_SCLK:%d\n", TFT_SCLK);
-    Serial.printf("TFT_CS:%d\n", TFT_CS);
-    Serial.printf("TFT_DC:%d\n", TFT_DC);
-    Serial.printf("TFT_RST:%d\n", TFT_RST);
-    Serial.printf("TFT_BL:%d\n", TFT_BL);
-    Serial.printf("SD_MISO:%d\n", SD_MISO);
-    Serial.printf("SD_MOSI:%d\n", SD_MOSI);
-    Serial.printf("SD_SCLK:%d\n", SD_SCLK);
-    Serial.printf("SD_CS:%d\n", SD_CS);
-    Serial.printf("I2C_SDA:%d\n", I2C_SDA);
-    Serial.printf("I2C_SCL:%d\n", I2C_SCL);
-    Serial.printf("SPEAKER_PWD:%d\n", SPEAKER_PWD);
-    Serial.printf("SPEAKER_OUT:%d\n", SPEAKER_OUT);
-    Serial.printf("ADC_IN:%d\n", ADC_IN);
-    Serial.printf("BUTTON_1:%d\n", BUTTON_1);
-    Serial.printf("BUTTON_2:%d\n", BUTTON_2);
-    Serial.printf("BUTTON_3:%d\n", BUTTON_3);
-#ifdef BUTTON_4
-    Serial.printf("BUTTON_4:%d\n", BUTTON_4);
-#endif
-
-// // !
-// #define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
-// #define TIME_TO_SLEEP  10        /* Time ESP32 will go to sleep (in seconds) */
-
-//     Wire.begin(I2C_SDA, I2C_SCL);
-//     setupMPU9250();
-//     readMPU9250();
-//     delay(100);
-//     IMU.setSleepEnabled(true);
-//     delay(2000);
-//     esp_sleep_enable_timer_wakeup(uS_TO_S_FACTOR * TIME_TO_SLEEP);
-//     esp_deep_sleep_start();
-// // //!
-
-    tft.init();
-    tft.setRotation(tftRotation);
-    tft.fillScreen(TFT_BLACK);
-    tft.setTextColor(TFT_WHITE);
-    tft.setCursor(0, 0);
-
-    if (TFT_BL > 0) {
-        pinMode(TFT_BL, OUTPUT);
-        digitalWrite(TFT_BL, HIGH);
-    }
-
-    //spisd_test();
-    button_init();
     tft.setTextFont(1);
-    //tft.setTextSize(1);
-
     tft.setTextSize(2);
     tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
     tft.setTextDatum(TL_DATUM);
-    tft.setCursor(0, 0);
     tft.println("hey disciples, has anyone seen The Bee Movie?");
     tft.println();
-    tft.println("a gift for Junior");
+    tft.println("a stupid gift for Junior");
 
     tft.setTextDatum(ML_DATUM); // for some reason this isn't working
     tft.setTextColor(TFT_CYAN, TFT_BLACK);
@@ -419,19 +277,95 @@ void setup() {
     tft.println("https://github.com/galenriley/BeeMovieBeamer");
     tft.println("with help from Becca and Don");
     tft.println();
-    tft.println("based on an IG reel by @dungeons.and.dragon.memes");
+    tft.println("based on a tiktok post by @jacuto");
     
     tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
     tft.setTextDatum(BL_DATUM); // for some reason this isn't working
     tft.setTextSize(2);
+    //tft.drawString("Battery: " + String(ip5306.check_battery_status()) + " " + String(ip5306.check_charging_status()), 0, tft.height());
     tft.drawString("[put battery info here]", 0, tft.height());
 
-    if (I2C_SDA > 0) {
-        Wire.begin(I2C_SDA, I2C_SCL);
+    hasShownDisplay = true;
+}
+
+void sleep()
+{
+    //tft.writecommand(ST7735_SLPIN);
+    esp_deep_sleep_start();
+}
+
+void flipDisplay()
+{
+    if (1 == tftRotation)
+        tftRotation = 3;
+    else if (3 == tftRotation)
+        tftRotation = 1;
+    tft.setRotation(tftRotation);
+    tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
+    tft.fillScreen(TFT_BLACK);
+    tft.setTextDatum(MC_DATUM);
+    tft.setTextSize(3);
+    tft.drawString("this side up", tft.width() / 2, tft.height() / 2);
+}
+
+void beeMovie()
+{
+    //setDisplayEnabled(true);
+    if (gif.open((uint8_t *)GIF_IMAGE, sizeof(GIF_IMAGE), GIFDraw))
+    {
+        //Serial.printf("Successfully opened GIF; Canvas size = %d x %d\n", gif.getCanvasWidth(), gif.getCanvasHeight());
+        tft.startWrite(); // The TFT chip select is locked low
+        while (gif.playFrame(true, NULL))
+        {
+            yield();
+        }
+        gif.close();
+        tft.endWrite(); // Release TFT chip select for other SPI devices
     }
+    tft.fillScreen(TFT_BLACK);
+    //setDisplayEnabled(false);
+}
+
+void print_wakeup_reason()
+{
+    esp_sleep_wakeup_cause_t wakeup_reason;
+
+    wakeup_reason = esp_sleep_get_wakeup_cause();
+
+    switch (wakeup_reason)
+    {
+        case ESP_SLEEP_WAKEUP_EXT0:     Serial.println("Wakeup caused by external signal using RTC_IO"); break;
+        case ESP_SLEEP_WAKEUP_EXT1:     Serial.println("Wakeup caused by external signal using RTC_CNTL"); break;
+        case ESP_SLEEP_WAKEUP_TIMER:    Serial.println("Wakeup caused by timer"); break;
+        case ESP_SLEEP_WAKEUP_TOUCHPAD: Serial.println("Wakeup caused by touchpad"); break;
+        case ESP_SLEEP_WAKEUP_ULP:      Serial.println("Wakeup caused by ULP program"); break;
+        default:                        Serial.printf("Wakeup was not caused by deep sleep: %d\n", wakeup_reason); break;
+    }
+}
+
+void setup() {
+    Serial.begin(115200);
+    // delay(1000); // why is this delay here in every example?
+    print_wakeup_reason();
+
+    esp_sleep_enable_ext1_wakeup(((uint64_t)(((uint64_t)1) << BUTTON_1)), ESP_EXT1_WAKEUP_ALL_LOW);
+
+    tft.init();
+    tft.setRotation(tftRotation);
+    tft.fillScreen(TFT_BLACK);
+
+    button_init();
     btnscanT.attach_ms(30, button_loop);
 
     gif.begin(BIG_ENDIAN_PIXELS);
+
+    if (!hasShownDisplay)
+        displayStartupScreen();
+    else
+    {
+        beeMovie();   
+        sleep();
+    }
 }
 
 
@@ -439,36 +373,12 @@ void loop() {
     switch (state) {
     case 1:
         state = 0;
-        digitalWrite(TFT_BL, HIGH); // enable TFT backlight
-        if (gif.open((uint8_t *)GIF_IMAGE, sizeof(GIF_IMAGE), GIFDraw))
-        {
-            Serial.printf("Successfully opened GIF; Canvas size = %d x %d\n", gif.getCanvasWidth(), gif.getCanvasHeight());
-            tft.startWrite(); // The TFT chip select is locked low
-            while (gif.playFrame(true, NULL))
-            {
-                yield();
-            }
-            gif.close();
-            tft.endWrite(); // Release TFT chip select for other SPI devices
-        }
-        tft.fillScreen(TFT_BLACK);
-        digitalWrite(TFT_BL, LOW); // disable TFT backlight
+        
+        beeMovie();
+        sleep();
+
         break;
     case 2:
-        state = 0;
-        tft.fillScreen(TFT_BLACK);
-        tft.setTextFont(font_id);
-        tft.setTextSize(3);
-        tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
-        tft.setTextDatum(MC_DATUM);
-        tft.drawString("font " + String(font_id), tft.width() / 2, tft.height() / 2);
-        font_id++;
-        break;
-    case 3:
-        state = 0;
-        listDir(SD, "/", 2);
-        break;
-    case 4:
         state = 0;
         /*
         tft.setTextColor(TFT_GREEN, TFT_BLACK);
@@ -476,24 +386,29 @@ void loop() {
         tft.setTextDatum(MC_DATUM);
         tft.drawString("Undefined function", tft.width() / 2, tft.height() / 2);
         */
-        
-        digitalWrite(TFT_BL, HIGH); // enable TFT backlight
-        if (1 == tftRotation)
-            tftRotation = 3;
-        else if (3 == tftRotation)
-            tftRotation = 1;
-        tft.setRotation(tftRotation);
-        tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
+
+        // infinite mode!
+        while (true)
+            beeMovie();
+
+        break;
+    case 3:
+        state = 0;
+        /*
+        tft.setTextColor(TFT_GREEN, TFT_BLACK);
         tft.fillScreen(TFT_BLACK);
         tft.setTextDatum(MC_DATUM);
-        tft.setTextSize(3);
-        tft.drawString("this side up", tft.width() / 2, tft.height() / 2);
-        delay(2000);
-        tft.fillScreen(TFT_BLACK);
-        digitalWrite(TFT_BL, LOW); // disable TFT backlight
+        tft.drawString("Undefined function", tft.width() / 2, tft.height() / 2);
+        */
+        break;
+    case 4:
+        state = 0;
+        
+        flipDisplay();       
 
         break;
     default:
+        state = 0;
         break;
     }
 }
