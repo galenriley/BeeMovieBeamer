@@ -487,8 +487,8 @@ void loop() {
         tft.fillScreen(TFT_BLACK);
         tft.setTextDatum(MC_DATUM);
         tft.setTextSize(3);
-        tft.drawString("tftRotation " + String(tftRotation), tft.width() / 2, tft.height() / 2);
-        delay(3000);
+        tft.drawString("this side up", tft.width() / 2, tft.height() / 2);
+        delay(2000);
         tft.fillScreen(TFT_BLACK);
         digitalWrite(TFT_BL, LOW); // disable TFT backlight
 
