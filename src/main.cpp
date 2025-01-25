@@ -264,11 +264,12 @@ void displayStartupScreen()
     tft.setTextDatum(TL_DATUM);
     tft.println("hey disciples, has anyone seen The Bee Movie?");
     tft.println();
-    tft.println("a stupid gift for Junior");
 
+    tft.setTextSize(1);
+    tft.println("(a stupid gift for Junior)");
+    
     tft.setTextDatum(ML_DATUM); // for some reason this isn't working
     tft.setTextColor(TFT_CYAN, TFT_BLACK);
-    tft.setTextSize(1);
     tft.println();
     tft.println();
     tft.println();
@@ -360,7 +361,9 @@ void setup() {
     gif.begin(BIG_ENDIAN_PIXELS);
 
     if (!hasShownDisplay)
+    {
         displayStartupScreen();
+    }
     else
     {
         beeMovie();   
