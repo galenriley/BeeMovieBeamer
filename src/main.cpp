@@ -22,7 +22,7 @@
 
 
 TFT_eSPI tft = TFT_eSPI();
-RTC_DATA_ATTR int tftRotation = 1;
+RTC_DATA_ATTR int tftRotation = 3;
 //IP5306 ip5306 = IP5306(I2C_SDA,I2C_SCL);
 
 AnimatedGIF gif;
