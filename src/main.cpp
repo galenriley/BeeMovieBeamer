@@ -2,6 +2,7 @@
 #include <FS.h>
 #include <LittleFS.h>
 #include <TFT_eSPI.h>
+#include <T4_V13.h>
 #include <SPI.h>
 #include <Wire.h>
 #include <Ticker.h>
@@ -12,10 +13,6 @@
 //#include <beemovie_wide.h>
 #include <beemovie_full.h>
 
-#define T4_V13
-#if defined(T4_V13)
-#include "T4_V13.h"
-#endif
 
 #define ST7735_SLPIN 0x10
 #define ST7735_SLPOUT 0x11
@@ -231,14 +228,6 @@ void setDisplayEnabled(bool enabled)
     }
 }
 
-void resetBeamCount()
-{
-    Serial.println("Resetting lifetime loop count");
-    beamCountFile = LittleFS.open(beamCountPath, "w", true);
-    beamCountFile.println("0");
-    beamCountFile.close();
-}
-
 String getBeamCount()
 {
     beamCountFile = LittleFS.open(beamCountPath, "r", false);
@@ -251,6 +240,15 @@ String getBeamCount()
     }
 
     return "Error getting " + beamCountPath; 
+}
+
+void resetBeamCount()
+{
+    Serial.println("Resetting lifetime loop count");
+    Serial.println("Previously " + getBeamCount());
+    beamCountFile = LittleFS.open(beamCountPath, "w", true);
+    beamCountFile.println("0");
+    beamCountFile.close();
 }
 
 void incrementBeamCount()
@@ -285,18 +283,18 @@ void displayStartupScreen()
     tft.println();
     tft.println("project info:");
     tft.println("https://github.com/galenriley/BeeMovieBeamer");
+    tft.println("based on a tiktok post by @jacuto");
     tft.println("with help from Becca and Don");
     tft.println();
-    tft.println("based on a tiktok post by @jacuto");
     tft.println();
+    tft.println();
+    tft.println("Lifetime Bees Movied: " + getBeamCount());
     
     tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
     tft.setTextDatum(BL_DATUM); // for some reason this isn't working
     tft.setTextSize(2);
     //tft.drawString("Battery: " + String(ip5306.check_battery_status()) + " " + String(ip5306.check_charging_status()), 0, tft.height());
-    String beamCountDisplay = "Lifetime Bees Movied: " + getBeamCount();
-    String batteryDisplay = "[put battery info here]";
-    tft.drawString(beamCountDisplay + "\n" + batteryDisplay, 0, tft.height());
+    tft.drawString("[put battery info here]", 0, tft.height());
 
     hasShownDisplay = true;
 }
@@ -378,10 +376,6 @@ void setup() {
         {
             Serial.println(beamCountPath + " does not exist, creating new");
             resetBeamCount();
-        }
-        else
-        {
-            Serial.println(beamCountPath + " exists on power up, current count=" + getBeamCount());
         }
     }
 
