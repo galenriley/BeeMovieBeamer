@@ -207,33 +207,6 @@ void button_init()
         pBtns[i] = Button2(g_btns[i]);
         pBtns[i].setPressedHandler(button_callback);
     }
-#if defined(T4_V13)
-/*
-#if defined(T4_V13)
-    pBtns[0].setLongClickHandler([](Button2 & b) {
-#endif
-
-        int x = tft.width() / 2 ;
-        int y = tft.height() / 2 - 30;
-        int r = digitalRead(TFT_BL);
-        tft.setTextSize(1);
-        tft.setTextColor(TFT_GREEN, TFT_BLACK);
-        tft.setTextDatum(MC_DATUM);
-        tft.fillScreen(TFT_BLACK);
-        tft.setTextColor(TFT_GREEN, TFT_BLACK);
-        tft.drawString("Press again to wake up", x - 20, y + 30);
-
-        delay(3000);
-        tft.writecommand(ST7735_SLPIN);
-        tft.writecommand(ST7735_DISPOFF);
-        digitalWrite(TFT_BL, !r);
-        delay(1000);
-        // esp_sleep_enable_ext0_wakeup((gpio_num_t )BUTTON_1, LOW);
-        esp_sleep_enable_ext1_wakeup(((uint64_t)(((uint64_t)1) << BUTTON_1)), ESP_EXT1_WAKEUP_ALL_LOW);
-        esp_deep_sleep_start();
-    });
-    */
-#endif
 }
 
 void button_loop() {
