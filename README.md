@@ -12,7 +12,7 @@ It is highly recommended to unplug the battery when not in use and store it in a
 - **Power Button** (located on the side of the device, near the corner)  
   Press to reset. Long press to power off/on.
 - **Button 1** (located next to the screen, in the center)  
-  Plays The Bee Movie once and puts the device to sleep.
+  Plays The Bee Movie once, then puts the device to sleep to conserve battery.
 - **Button 2** (located next to the screen, on top if the USB port is oriented upward)  
   Resets the "Lifetime Bees Movied" counter on the startup screen.  
   *This button only works on the startup screen.
