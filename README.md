@@ -5,10 +5,12 @@ based on a [tiktok from @jacuto](https://www.tiktok.com/@jacuto/video/7439527807
 with help from Becca and Don
 
 ## Safety/Disclaimers
+
 I am an idiot that doesn't know what he is doing with microcontrollers! Lithium batteries are terrifying! And flammable!
 It is highly recommended to unplug the battery when not in use and store it in a fire safe container away from anything combustible.
 
 ## Button Functions
+
 - **Power Button** (located on the side of the device, near the corner)  
   Press to reset. Long press to power off/on.
 - **Button 1** (located next to the screen, in the center)  
@@ -24,8 +26,16 @@ It is highly recommended to unplug the battery when not in use and store it in a
   Vertically flips the display.  
   *This button only works on the startup screen.
 
-  ## Disassembly
-  1. Remove the hand strap.
-  2. Insert a fingernail or prying tool in the slot on the side of the case (opposite the USB port).
-  3. Remove the back panel.
-  4. _Carefully_ lift the battery, slide out the battery tray, and unplug the battery cable.
+## Disassembly
+  
+1. Remove the hand strap.
+2. Insert a fingernail or prying tool in the slot on the side of the case (opposite the USB port).
+3. Remove the back panel by sliding it out.
+4. _Carefully_ lift the battery, slide out the battery tray, and unplug the battery cable.  
+ 
+## Materials
+
+- [LILYGO T4 v1.3 with 2.4 inch display](https://lilygo.cc/products/t4?variant=42405660393653)
+- 654065 3.7V Lipo Battery, 2000mAh, with JST GH 1. 25mm plug
+- 1 inch nylon strap
+- tri-glide buckle
