@@ -1,4 +1,6 @@
 #include <Arduino.h>
+#include <FS.h>
+#include <LittleFS.h>
 #include <TFT_eSPI.h>
 #include <SPI.h>
 #include <Wire.h>
@@ -37,6 +39,9 @@ RTC_DATA_ATTR bool hasShownDisplay = false;
 Button2 *pBtns = nullptr;
 uint8_t g_btns[] =  BUTTONS_MAP;
 Ticker btnscanT;
+
+String beamCountPath = "/beam_count.txt";
+File beamCountFile;
 
 // adapted from https://github.com/bitbank2/AnimatedGIF/blob/master/examples/TFT_eSPI_memory/GIFDraw.ino
 // added yOffset for setting vertical position
@@ -148,6 +153,7 @@ void GIFDraw(GIFDRAW *pDraw)
     }
 }
 
+// Button handling functions, from lilygo example
 void button_handle(uint8_t gpio)
 {
     switch (gpio) {
@@ -236,7 +242,6 @@ void button_loop() {
     }
 }
 
-
 void setDisplayEnabled(bool enabled)
 {
     if (enabled)
@@ -253,6 +258,29 @@ void setDisplayEnabled(bool enabled)
     }
 }
 
+String getBeamCount()
+{
+    beamCountFile = LittleFS.open(beamCountPath, "r", false);
+    if (beamCountFile.available())
+    {
+        String value = beamCountFile.readString();
+        beamCountFile.close();
+
+        return value;
+    }
+
+    return "Error getting " + beamCountPath; 
+}
+
+void incrementBeamCount()
+{
+    beamCountFile = LittleFS.open(beamCountPath, "r+", false);
+    String value = beamCountFile.readString();
+    String incremented = String(value.toInt() + 1);
+    beamCountFile.seek(0, SeekSet);
+    beamCountFile.println(incremented);
+    beamCountFile.close();
+}
 
 void displayStartupScreen()
 {
@@ -262,7 +290,7 @@ void displayStartupScreen()
     tft.setTextSize(2);
     tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
     tft.setTextDatum(TL_DATUM);
-    tft.println("hey disciples, has anyone seen The Bee Movie?");
+    tft.println("Hey disciples, has anyone seen The Bee Movie?");
     tft.println();
 
     tft.setTextSize(1);
@@ -279,12 +307,15 @@ void displayStartupScreen()
     tft.println("with help from Becca and Don");
     tft.println();
     tft.println("based on a tiktok post by @jacuto");
+    tft.println();
     
     tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
     tft.setTextDatum(BL_DATUM); // for some reason this isn't working
     tft.setTextSize(2);
     //tft.drawString("Battery: " + String(ip5306.check_battery_status()) + " " + String(ip5306.check_charging_status()), 0, tft.height());
-    tft.drawString("[put battery info here]", 0, tft.height());
+    String beamCountDisplay = "Lifetime Bees Movied: " + getBeamCount();
+    String batteryDisplay = "[put battery info here]";
+    tft.drawString(beamCountDisplay + "\n" + batteryDisplay, 0, tft.height());
 
     hasShownDisplay = true;
 }
@@ -325,6 +356,8 @@ void beeMovie()
     }
     tft.fillScreen(TFT_BLACK);
     //setDisplayEnabled(false);
+
+    incrementBeamCount();
 }
 
 void print_wakeup_reason()
@@ -348,6 +381,30 @@ void setup() {
     Serial.begin(115200);
     // delay(1000); // why is this delay here in every example?
     print_wakeup_reason();
+
+    if (!LittleFS.begin(true))
+    {
+        Serial.println("LittleFS Mount Failed");
+        return;
+    }
+    else
+    {
+        //Serial.println("Removing " + beamCountPath);
+        //LittleFS.remove(beamCountPath);
+        
+        // initialize new beam_count.txt
+        if (!LittleFS.exists(beamCountPath))
+        {
+            Serial.println(beamCountPath + " does not exist, creating new");
+            beamCountFile = LittleFS.open(beamCountPath, "w", true);
+            beamCountFile.println("0");
+            beamCountFile.close();
+        }
+        else
+        {
+            Serial.println(beamCountPath + " exists on power up, current count=" + getBeamCount());
+        }
+    }
 
     esp_sleep_enable_ext1_wakeup(((uint64_t)(((uint64_t)1) << BUTTON_1)), ESP_EXT1_WAKEUP_ALL_LOW);
 
