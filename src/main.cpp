@@ -258,6 +258,14 @@ void setDisplayEnabled(bool enabled)
     }
 }
 
+void resetBeamCount()
+{
+    Serial.println("Resetting lifetime loop count");
+    beamCountFile = LittleFS.open(beamCountPath, "w", true);
+    beamCountFile.println("0");
+    beamCountFile.close();
+}
+
 String getBeamCount()
 {
     beamCountFile = LittleFS.open(beamCountPath, "r", false);
@@ -396,9 +404,7 @@ void setup() {
         if (!LittleFS.exists(beamCountPath))
         {
             Serial.println(beamCountPath + " does not exist, creating new");
-            beamCountFile = LittleFS.open(beamCountPath, "w", true);
-            beamCountFile.println("0");
-            beamCountFile.close();
+            resetBeamCount();
         }
         else
         {
@@ -446,10 +452,7 @@ void loop() {
         tft.setTextDatum(MC_DATUM);
         tft.drawString("Undefined function", tft.width() / 2, tft.height() / 2);
         */
-
-        // infinite mode!
-        while (true)
-            beeMovie();
+        resetBeamCount();
 
         break;
     case 3:
@@ -460,6 +463,11 @@ void loop() {
         tft.setTextDatum(MC_DATUM);
         tft.drawString("Undefined function", tft.width() / 2, tft.height() / 2);
         */
+
+        // infinite mode!
+        while (true)
+            beeMovie();
+
         break;
     case 4:
         state = 0;
