@@ -9,7 +9,8 @@ with help from Becca and Don
 I am an idiot that doesn't know what he is doing with microcontrollers! Lithium batteries are terrifying! And flammable!
 It is highly recommended to unplug the battery when not in use and store it in a fire safe container away from anything combustible.
 
-![image](https://github.com/user-attachments/assets/b3f3e387-9356-4269-b82e-26960a2d6696)
+![BeeMovieBeamer render](https://github.com/user-attachments/assets/5b0ba572-1fcc-4ca3-a39d-aec45c3e1888)
+
 
 ## Button Functions
 
