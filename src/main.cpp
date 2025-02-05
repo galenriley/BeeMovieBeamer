@@ -419,7 +419,7 @@ void loop() {
         tft.setTextDatum(MC_DATUM);
         tft.drawString("Undefined function", tft.width() / 2, tft.height() / 2);
         */
-        resetBeamCount();
+        flipDisplay();
 
         break;
     case 3:
@@ -439,7 +439,8 @@ void loop() {
     case 4:
         state = 0;
         
-        flipDisplay();       
+        // TODO: require confirmation somehow
+        resetBeamCount();
 
         break;
     default:
