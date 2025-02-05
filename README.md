@@ -14,19 +14,19 @@ It is highly recommended to unplug the battery when not in use and store it in a
 ## Button Functions
 
 - **Power Button** (located on the side of the device, near the corner)  
-  Press to reset. Long press to power off/on.
+  Press to reset/power on. Double press to power off.
 - **Button 1** (located next to the screen, in the center)  
   Plays The Bee Movie once, then puts the device to sleep to conserve battery.
 - **Button 2** (located next to the screen, on top if the USB port is oriented upward)  
-  Resets the "Lifetime Bees Movied" counter on the startup screen.  
+  Vertically flips the display.  
   *This button only works on the startup screen.
-  The provided case does not provide access to this button, but the button can be accessed when the device is disassembled and power is supplied.
 - **Button 3** (located next to the screen, on the bottom if the USB port is oriented upward)  
   Plays The Bee Movie on loop until the device is reset using the Power Button or the battery dies.  
   *This button only works on the startup screen. 
 - **Button 4** (located on the side of the device, near the USB port)  
-  Vertically flips the display.  
+  Resets the "Lifetime Bees Movied" counter on the startup screen.  
   *This button only works on the startup screen.
+  The provided case provides access to this button using the provided sim ejector tool or paperclip.
 
 ## Disassembly
   
