@@ -33,7 +33,7 @@ It is highly recommended to unplug the battery when not in use and store it in a
 ## Disassembly
   
 1. Remove the hand strap.
-2. Insert a fingernail or prying tool in the slot on the side of the case (opposite the USB port).
+2. Insert a fingernail or prying tool in the slots on the side of the case.
 3. Remove the back panel by sliding it out.
 4. _Carefully_ lift the battery, slide out the battery tray, and unplug the battery cable.  
  
