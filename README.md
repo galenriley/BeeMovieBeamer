@@ -25,7 +25,8 @@ It is highly recommended to unplug the battery when not in use and store it in a
   Plays The Bee Movie on loop until the device is reset using the Power Button or the battery dies.  
   *This button only works on the startup screen. 
 - **Button 4** (located on the side of the device, near the USB port)  
-  Resets the "Lifetime Bees Movied" counter on the startup screen.  
+  Resets the "Lifetime Bees Movied" counter on the startup screen.
+  Press once for conformation prompt. Press twice to reset the counter.  
   *This button only works on the startup screen.
   The provided case provides access to this button using the provided sim ejector tool or paperclip.
 
