@@ -9,24 +9,25 @@ with help from Becca and Don
 I am an idiot that doesn't know what he is doing with microcontrollers! Lithium batteries are terrifying! And flammable!
 It is highly recommended to unplug the battery when not in use and store it in a fire safe container away from anything combustible.
 
-![image](https://github.com/user-attachments/assets/b3f3e387-9356-4269-b82e-26960a2d6696)
+![BeeMovieBeamer render](https://github.com/user-attachments/assets/5b0ba572-1fcc-4ca3-a39d-aec45c3e1888)
+
 
 ## Button Functions
 
 - **Power Button** (located on the side of the device, near the corner)  
-  Press to reset. Long press to power off/on.
+  Press to reset/power on. Double press to power off.
 - **Button 1** (located next to the screen, in the center)  
   Plays The Bee Movie once, then puts the device to sleep to conserve battery.
 - **Button 2** (located next to the screen, on top if the USB port is oriented upward)  
-  Resets the "Lifetime Bees Movied" counter on the startup screen.  
+  Vertically flips the display.  
   *This button only works on the startup screen.
-  The provided case does not provide access to this button, but the button can be accessed when the device is disassembled and power is supplied.
 - **Button 3** (located next to the screen, on the bottom if the USB port is oriented upward)  
   Plays The Bee Movie on loop until the device is reset using the Power Button or the battery dies.  
   *This button only works on the startup screen. 
 - **Button 4** (located on the side of the device, near the USB port)  
-  Vertically flips the display.  
+  Resets the "Lifetime Bees Movied" counter on the startup screen.  
   *This button only works on the startup screen.
+  The provided case provides access to this button using the provided sim ejector tool or paperclip.
 
 ## Disassembly
   
