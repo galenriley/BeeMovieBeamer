@@ -39,6 +39,11 @@ Ticker btnscanT;
 
 String beamCountPath = "/beam_count.txt";
 File beamCountFile;
+bool beamCountResetPrompt = false;
+// log of resets, because Becca insisted
+// Note: no counting was done previous to 1/31 but the Bee Movie was certainly beamed a few dozen times during early development and testing and fuckin' around with it
+// - 2025/01/31: 27
+// - 2025/02/08: 61
 
 // adapted from https://github.com/bitbank2/AnimatedGIF/blob/master/examples/TFT_eSPI_memory/GIFDraw.ino
 // added yOffset for setting vertical position
@@ -212,28 +217,13 @@ void button_loop() {
     }
 }
 
-void setDisplayEnabled(bool enabled)
-{
-    if (enabled)
-    {
-        tft.fillScreen(TFT_BLACK);
-        tft.writecommand(ST7735_DISPON);
-        //tft.fillScreen(TFT_BLACK);
-        digitalWrite(TFT_BL, TFT_BACKLIGHT_ON);
-    }
-    else
-    {
-        tft.writecommand(ST7735_DISPOFF);
-        digitalWrite(TFT_BL, LOW);
-    }
-}
-
 String getBeamCount()
 {
     beamCountFile = LittleFS.open(beamCountPath, "r", false);
     if (beamCountFile.available())
     {
         String value = beamCountFile.readString();
+        value.trim();
         beamCountFile.close();
 
         return value;
@@ -242,13 +232,33 @@ String getBeamCount()
     return "Error getting " + beamCountPath; 
 }
 
+void displayResetBeamCountConfirmation()
+{
+    beamCountResetPrompt = true;
+
+    tft.setTextColor(TFT_RED, TFT_BLACK);
+    tft.fillScreen(TFT_BLACK);
+    tft.setCursor(0, 0);
+    tft.setTextSize(2);
+    tft.println("Do you want to reset the \"Lifetime Bees Movied\" counter to zero? Press button again to confirm.");
+}
+
 void resetBeamCount()
 {
-    Serial.println("Resetting lifetime loop count");
-    Serial.println("Previously " + getBeamCount());
+    tft.setTextColor(TFT_RED, TFT_BLACK);
+    tft.fillScreen(TFT_BLACK);
+    tft.setCursor(0, 0);
+    tft.setTextSize(2);
+    tft.println("Resetting \"Lifetime Bees Movied\" counter to zero.");
+    tft.println("(Previously " + getBeamCount() + ")");
+
+    Serial.println("Resetting \"Lifetime Bees Movied\" counter to zero.");
+    Serial.println("(Previously " + getBeamCount() + ")");
     beamCountFile = LittleFS.open(beamCountPath, "w", true);
     beamCountFile.println("0");
     beamCountFile.close();
+
+    beamCountResetPrompt = false;
 }
 
 void incrementBeamCount()
@@ -267,12 +277,13 @@ void displayStartupScreen()
     tft.setCursor(0, 0);
     tft.setTextFont(1);
     tft.setTextSize(2);
-    tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
+    tft.setTextColor(TFT_YELLOW, TFT_BLACK);
     tft.setTextDatum(TL_DATUM);
     tft.println("Hey disciples, has anyone seen The Bee Movie?");
     tft.println();
 
     tft.setTextSize(1);
+    tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
     tft.println("(a stupid gift for Junior)");
     
     tft.setTextDatum(ML_DATUM); // for some reason this isn't working
@@ -312,16 +323,17 @@ void flipDisplay()
     else if (3 == tftRotation)
         tftRotation = 1;
     tft.setRotation(tftRotation);
-    tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
+    tft.setTextColor(TFT_YELLOW, TFT_BLACK);
     tft.fillScreen(TFT_BLACK);
-    tft.setTextDatum(MC_DATUM);
     tft.setTextSize(3);
+    tft.setTextDatum(TC_DATUM);
+    tft.drawString("^^^", tft.width() / 2, 0);
+    tft.setTextDatum(MC_DATUM);
     tft.drawString("this side up", tft.width() / 2, tft.height() / 2);
 }
 
 void beeMovie()
 {
-    //setDisplayEnabled(true);
     if (gif.open((uint8_t *)GIF_IMAGE, sizeof(GIF_IMAGE), GIFDraw))
     {
         //Serial.printf("Successfully opened GIF; Canvas size = %d x %d\n", gif.getCanvasWidth(), gif.getCanvasHeight());
@@ -333,8 +345,6 @@ void beeMovie()
         gif.close();
         tft.endWrite(); // Release TFT chip select for other SPI devices
     }
-    tft.fillScreen(TFT_BLACK);
-    //setDisplayEnabled(false);
 
     incrementBeamCount();
 }
@@ -361,24 +371,6 @@ void setup() {
     // delay(1000); // why is this delay here in every example?
     print_wakeup_reason();
 
-    if (!LittleFS.begin(true))
-    {
-        Serial.println("LittleFS Mount Failed");
-        return;
-    }
-    else
-    {
-        //Serial.println("Removing " + beamCountPath);
-        //LittleFS.remove(beamCountPath);
-        
-        // initialize new beam_count.txt
-        if (!LittleFS.exists(beamCountPath))
-        {
-            Serial.println(beamCountPath + " does not exist, creating new");
-            resetBeamCount();
-        }
-    }
-
     esp_sleep_enable_ext1_wakeup(((uint64_t)(((uint64_t)1) << BUTTON_1)), ESP_EXT1_WAKEUP_ALL_LOW);
 
     tft.init();
@@ -387,6 +379,30 @@ void setup() {
 
     button_init();
     btnscanT.attach_ms(30, button_loop);
+
+    if (!LittleFS.begin(true))
+    {
+        Serial.println("LittleFS Mount Failed");
+        return;
+    }
+    else
+    {        
+        // initialize new beam_count.txt
+        if (!LittleFS.exists(beamCountPath))
+        {
+            Serial.println(beamCountPath + " does not exist, creating new counter for \"Lifetime Bees Movied\"");
+            
+            tft.setTextColor(TFT_RED, TFT_BLACK);
+            tft.setCursor(0,0);
+            tft.setTextFont(1);
+            tft.setTextSize(2);
+            tft.println(beamCountPath + " does not exist, creating new counter for \"Lifetime Bees Movied\"");
+            
+            resetBeamCount();
+            // hold on this screen for 5s before moving on
+            delay(5000);
+        }
+    }
 
     gif.begin(BIG_ENDIAN_PIXELS);
 
@@ -406,6 +422,7 @@ void loop() {
     switch (state) {
     case 1:
         state = 0;
+        beamCountResetPrompt = false;
         
         beeMovie();
         sleep();
@@ -413,6 +430,7 @@ void loop() {
         break;
     case 2:
         state = 0;
+        beamCountResetPrompt = false;
         /*
         tft.setTextColor(TFT_GREEN, TFT_BLACK);
         tft.fillScreen(TFT_BLACK);
@@ -424,6 +442,7 @@ void loop() {
         break;
     case 3:
         state = 0;
+        beamCountResetPrompt = false;
         /*
         tft.setTextColor(TFT_GREEN, TFT_BLACK);
         tft.fillScreen(TFT_BLACK);
@@ -439,8 +458,12 @@ void loop() {
     case 4:
         state = 0;
         
-        // TODO: require confirmation somehow
-        resetBeamCount();
+        Serial.println("beamCountResetPrompt: " + String(beamCountResetPrompt));
+
+        if (!beamCountResetPrompt)
+            displayResetBeamCountConfirmation();
+        else
+            resetBeamCount();
 
         break;
     default:
