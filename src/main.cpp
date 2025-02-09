@@ -10,32 +10,25 @@
 //#include <IP5306_I2C.h>
 #include <AnimatedGIF.h>
 
-//#include <beemovie_wide.h>
-#include <beemovie_full.h>
-
-
-#define ST7735_SLPIN 0x10
-#define ST7735_SLPOUT 0x11
-#define ST7735_DISPOFF 0x28
-#define ST7735_DISPON 0x29
-
+uint8_t state = 0;
 
 TFT_eSPI tft = TFT_eSPI();
 RTC_DATA_ATTR int tftRotation = 3;
-//IP5306 ip5306 = IP5306(I2C_SDA,I2C_SCL);
-
-AnimatedGIF gif;
-
-//int yOffset = 35; // custom offset for vertical positioning
-int yOffset = 0; // custom offset for vertical positioning
-#define GIF_IMAGE beemovie
-
-uint8_t state = 0;
+// determines behavior when waking up from sleep mode
 RTC_DATA_ATTR bool hasShownDisplay = false;
 
 Button2 *pBtns = nullptr;
 uint8_t g_btns[] =  BUTTONS_MAP;
 Ticker btnscanT;
+
+//IP5306 ip5306 = IP5306(I2C_SDA,I2C_SCL);
+
+//#include <beemovie_wide.h>
+//int yOffset = 35;
+#include <beemovie_full.h>
+int yOffset = 0;
+#define GIF_IMAGE beemovie
+AnimatedGIF gif;
 
 String beamCountPath = "/beam_count.txt";
 File beamCountFile;
@@ -217,6 +210,7 @@ void button_loop() {
     }
 }
 
+// "Lifetime Bees Movied" counter is stored in a local file
 String getBeamCount()
 {
     beamCountFile = LittleFS.open(beamCountPath, "r", false);
@@ -349,27 +343,9 @@ void beeMovie()
     incrementBeamCount();
 }
 
-void print_wakeup_reason()
-{
-    esp_sleep_wakeup_cause_t wakeup_reason;
-
-    wakeup_reason = esp_sleep_get_wakeup_cause();
-
-    switch (wakeup_reason)
-    {
-        case ESP_SLEEP_WAKEUP_EXT0:     Serial.println("Wakeup caused by external signal using RTC_IO"); break;
-        case ESP_SLEEP_WAKEUP_EXT1:     Serial.println("Wakeup caused by external signal using RTC_CNTL"); break;
-        case ESP_SLEEP_WAKEUP_TIMER:    Serial.println("Wakeup caused by timer"); break;
-        case ESP_SLEEP_WAKEUP_TOUCHPAD: Serial.println("Wakeup caused by touchpad"); break;
-        case ESP_SLEEP_WAKEUP_ULP:      Serial.println("Wakeup caused by ULP program"); break;
-        default:                        Serial.printf("Wakeup was not caused by deep sleep: %d\n", wakeup_reason); break;
-    }
-}
-
 void setup() {
     Serial.begin(115200);
     // delay(1000); // why is this delay here in every example?
-    print_wakeup_reason();
 
     esp_sleep_enable_ext1_wakeup(((uint64_t)(((uint64_t)1) << BUTTON_1)), ESP_EXT1_WAKEUP_ALL_LOW);
 
@@ -406,6 +382,7 @@ void setup() {
 
     gif.begin(BIG_ENDIAN_PIXELS);
 
+    // setup() runs on boot or when waking from sleep, play gif immediately if waking
     if (!hasShownDisplay)
     {
         displayStartupScreen();
@@ -457,8 +434,6 @@ void loop() {
         break;
     case 4:
         state = 0;
-        
-        Serial.println("beamCountResetPrompt: " + String(beamCountResetPrompt));
 
         if (!beamCountResetPrompt)
             displayResetBeamCountConfirmation();
