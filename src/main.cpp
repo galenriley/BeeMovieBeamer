@@ -16,7 +16,8 @@ uint8_t state = 0;
 TFT_eSPI tft = TFT_eSPI();
 RTC_DATA_ATTR int tftRotation = 3;
 // determines behavior when waking up from sleep mode
-RTC_DATA_ATTR bool hasShownDisplay = false;
+RTC_DATA_ATTR bool hasShownDisplay = false; 
+bool pollBattery = false;
 
 Button2 *pBtns = nullptr;
 uint8_t g_btns[] =  BUTTONS_MAP;
@@ -370,6 +371,23 @@ uint8_t getBatteryLevel()
     }
 }
 
+void drawBatteryStatus()
+{
+    if (pollBattery && getBatteryExists())
+    {
+        tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
+        tft.setTextDatum(BL_DATUM); // for some reason this isn't working
+        tft.setTextSize(2);
+        String battery = "";
+        battery += String(getBatteryLevel()) + "%";
+        if (!getIsChargerConnected())
+            battery += " (Not charging)";
+        else
+            battery += " (Charging)";
+        tft.drawString(battery, 0, tft.height());
+    }
+}
+
 void displayStartupScreen()
 {
     tft.fillScreen(TFT_BLACK);
@@ -400,20 +418,8 @@ void displayStartupScreen()
     tft.println();
     tft.println("Lifetime Bees Movied: " + getBeamCount());
     
-    tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
-    tft.setTextDatum(BL_DATUM); // for some reason this isn't working
-    tft.setTextSize(2);
-    
-    if (getBatteryExists())
-    {
-        String battery = "";
-        battery += String(getBatteryLevel()) + "%";
-        if (!getIsChargerConnected())
-            battery += " (Not charging)";
-        else
-            battery += " (Charging)";
-        tft.drawString(battery, 0, tft.height());
-    }
+    pollBattery = true;
+    drawBatteryStatus();
 
     hasShownDisplay = true;
 }
@@ -486,6 +492,7 @@ void loop() {
     switch (state) {
     case 1:
         state = 0;
+        pollBattery = false;
         beamCountResetPrompt = false;
         
         beeMovie();
@@ -494,6 +501,7 @@ void loop() {
         break;
     case 2:
         state = 0;
+        pollBattery = false;
         beamCountResetPrompt = false;
         /*
         tft.setTextColor(TFT_GREEN, TFT_BLACK);
@@ -506,6 +514,7 @@ void loop() {
         break;
     case 3:
         state = 0;
+        pollBattery = false;
         beamCountResetPrompt = false;
         /*
         tft.setTextColor(TFT_GREEN, TFT_BLACK);
@@ -521,6 +530,7 @@ void loop() {
         break;
     case 4:
         state = 0;
+        pollBattery = false;
 
         if (!beamCountResetPrompt)
             displayResetBeamCountConfirmation();
@@ -532,4 +542,7 @@ void loop() {
         state = 0;
         break;
     }
+
+    if (pollBattery)
+        drawBatteryStatus();
 }
