@@ -7,8 +7,9 @@
 #include <Wire.h>
 #include <Ticker.h>
 #include <Button2.h>
-//#include <IP5306_I2C.h>
 #include <AnimatedGIF.h>
+
+#define IP5306_ADDRESS 0x75
 
 uint8_t state = 0;
 
@@ -20,8 +21,6 @@ RTC_DATA_ATTR bool hasShownDisplay = false;
 Button2 *pBtns = nullptr;
 uint8_t g_btns[] =  BUTTONS_MAP;
 Ticker btnscanT;
-
-//IP5306 ip5306 = IP5306(I2C_SDA,I2C_SCL);
 
 //#include <beemovie_wide.h>
 //int yOffset = 35;
@@ -265,45 +264,6 @@ void incrementBeamCount()
     beamCountFile.close();
 }
 
-void displayStartupScreen()
-{
-    tft.fillScreen(TFT_BLACK);
-    tft.setCursor(0, 0);
-    tft.setTextFont(1);
-    tft.setTextSize(2);
-    tft.setTextColor(TFT_YELLOW, TFT_BLACK);
-    tft.setTextDatum(TL_DATUM);
-    tft.println("Hey disciples, has anyone seen The Bee Movie?");
-    tft.println();
-
-    tft.setTextSize(1);
-    tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
-    tft.println("(a stupid gift for Junior)");
-    
-    tft.setTextDatum(ML_DATUM); // for some reason this isn't working
-    tft.setTextColor(TFT_CYAN, TFT_BLACK);
-    tft.println();
-    tft.println();
-    tft.println();
-    tft.println();
-    tft.println("project info:");
-    tft.println("https://github.com/galenriley/BeeMovieBeamer");
-    tft.println("based on a tiktok post by @jacuto");
-    tft.println("with help from Becca and Don");
-    tft.println();
-    tft.println();
-    tft.println();
-    tft.println("Lifetime Bees Movied: " + getBeamCount());
-    
-    tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
-    tft.setTextDatum(BL_DATUM); // for some reason this isn't working
-    tft.setTextSize(2);
-    //tft.drawString("Battery: " + String(ip5306.check_battery_status()) + " " + String(ip5306.check_charging_status()), 0, tft.height());
-    tft.drawString("[put battery info here]", 0, tft.height());
-
-    hasShownDisplay = true;
-}
-
 void sleep()
 {
     //tft.writecommand(ST7735_SLPIN);
@@ -343,11 +303,135 @@ void beeMovie()
     incrementBeamCount();
 }
 
+bool getBatteryExists()
+{
+    Wire.begin(I2C_SDA,I2C_SCL);
+    Wire.beginTransmission(IP5306_ADDRESS);
+    uint8_t result = Wire.endTransmission();
+    if (0 == result)
+    {
+        //Serial.println("Detected IP5306 battery");
+        return true;
+    }
+    else
+    {
+        //Serial.println("Did not detect IP5306 battery?");
+    }
+
+    return false;
+}
+
+bool getIsChargerConnected()
+{
+    if (getBatteryExists())
+    {
+        Wire.begin(I2C_SDA,I2C_SCL);
+        Wire.beginTransmission(IP5306_ADDRESS);
+        Wire.write(0x70);
+        if (Wire.endTransmission(false) == 0 && Wire.requestFrom(IP5306_ADDRESS, 1))
+        {
+            return (Wire.read() & (1 << 3)) ? true : false;
+        }
+    }
+}
+
+bool getIsChargeFull()
+{
+    if (getBatteryExists())
+    {
+        Wire.begin(I2C_SDA,I2C_SCL);
+        Wire.beginTransmission(IP5306_ADDRESS);
+        Wire.write(0x71);
+        if (Wire.endTransmission(false) == 0 && Wire.requestFrom(IP5306_ADDRESS, 1))
+        {
+            return (Wire.read() & (1 << 3)) ? false : true;
+        }
+    }
+}
+
+uint8_t getBatteryLevel()
+{
+    if (getBatteryExists())
+    {
+        Wire.begin(I2C_SDA,I2C_SCL);
+        Wire.beginTransmission(IP5306_ADDRESS);
+        Wire.write(0x78);
+        if (Wire.endTransmission(false) == 0 && Wire.requestFrom(IP5306_ADDRESS, 1))
+        {
+            switch (Wire.read() & 0xF0)
+            {
+                case 0xE0: return 25;
+                case 0xC0: return 50;
+                case 0x80: return 75;
+                case 0x00: return 100;
+                default: return 0;
+            }
+        }
+    }
+}
+
+void displayStartupScreen()
+{
+    tft.fillScreen(TFT_BLACK);
+    tft.setCursor(0, 0);
+    tft.setTextFont(1);
+    tft.setTextSize(2);
+    tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+    tft.setTextDatum(TL_DATUM);
+    tft.println("Hey disciples, has anyone seen The Bee Movie?");
+    tft.println();
+
+    tft.setTextSize(1);
+    tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
+    tft.println("(a stupid gift for Junior)");
+    
+    tft.setTextDatum(ML_DATUM); // for some reason this isn't working
+    tft.setTextColor(TFT_CYAN, TFT_BLACK);
+    tft.println();
+    tft.println();
+    tft.println();
+    tft.println();
+    tft.println("project info:");
+    tft.println("https://github.com/galenriley/BeeMovieBeamer");
+    tft.println("based on a tiktok post by @jacuto");
+    tft.println("with help from Becca and Don");
+    tft.println();
+    tft.println();
+    tft.println();
+    tft.println("Lifetime Bees Movied: " + getBeamCount());
+    
+    tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
+    tft.setTextDatum(BL_DATUM); // for some reason this isn't working
+    tft.setTextSize(2);
+    //tft.drawString("[put battery info here]", 0, tft.height());
+    String battery = "";
+    battery += String(getBatteryLevel()) + "%";
+    if (!getIsChargerConnected())
+        battery += " (Not charging)";
+    else
+        battery += " (Charging)";
+    tft.drawString(battery, 0, tft.height());
+
+    hasShownDisplay = true;
+}
+
 void setup() {
     Serial.begin(115200);
     // delay(1000); // why is this delay here in every example?
 
     esp_sleep_enable_ext1_wakeup(((uint64_t)(((uint64_t)1) << BUTTON_1)), ESP_EXT1_WAKEUP_ALL_LOW);
+
+    if(getBatteryExists())
+    {
+        Serial.println("Charger connected?");
+        Serial.println(getIsChargerConnected());
+
+        Serial.println("Charge full?");
+        Serial.println(getIsChargeFull());
+
+        Serial.println("Battery level?");
+        Serial.println(getBatteryLevel());
+    }
 
     tft.init();
     tft.setRotation(tftRotation);
