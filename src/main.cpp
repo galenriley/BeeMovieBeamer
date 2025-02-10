@@ -403,14 +403,17 @@ void displayStartupScreen()
     tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
     tft.setTextDatum(BL_DATUM); // for some reason this isn't working
     tft.setTextSize(2);
-    //tft.drawString("[put battery info here]", 0, tft.height());
-    String battery = "";
-    battery += String(getBatteryLevel()) + "%";
-    if (!getIsChargerConnected())
-        battery += " (Not charging)";
-    else
-        battery += " (Charging)";
-    tft.drawString(battery, 0, tft.height());
+    
+    if (getBatteryExists())
+    {
+        String battery = "";
+        battery += String(getBatteryLevel()) + "%";
+        if (!getIsChargerConnected())
+            battery += " (Not charging)";
+        else
+            battery += " (Charging)";
+        tft.drawString(battery, 0, tft.height());
+    }
 
     hasShownDisplay = true;
 }
