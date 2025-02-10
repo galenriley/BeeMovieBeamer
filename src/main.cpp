@@ -379,11 +379,10 @@ void drawBatteryStatus()
         tft.setTextDatum(BL_DATUM); // for some reason this isn't working
         tft.setTextSize(2);
         String battery = "";
-        battery += String(getBatteryLevel()) + "%";
-        if (!getIsChargerConnected())
-            battery += " (Not charging)";
+        if (getIsChargerConnected())
+            battery = "Charging";
         else
-            battery += " (Charging)";
+            battery = "Battery " + String(getBatteryLevel()) + "%";
         tft.drawString(battery, 0, tft.height());
     }
 }
