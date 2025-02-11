@@ -304,6 +304,7 @@ void beeMovie()
     incrementBeamCount();
 }
 
+// Examples from https://github.com/rynskyi/IP5306
 bool getBatteryExists()
 {
     Wire.begin(I2C_SDA,I2C_SCL);
