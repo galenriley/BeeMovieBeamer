@@ -7,7 +7,7 @@ with help from Becca and Don
 ## Safety/Disclaimers
 
 I am an idiot that doesn't know what he is doing with microcontrollers! Lithium batteries are terrifying! And flammable!
-It is highly recommended to unplug the battery when not in use and store it in a fire safe container away from anything combustible.
+It is highly recommended to gently unplug the battery when not in use and store it in a fire safe container away from anything combustible.
 
 ![BeeMovieBeamer render](https://github.com/user-attachments/assets/5b0ba572-1fcc-4ca3-a39d-aec45c3e1888)
 
@@ -17,7 +17,7 @@ It is highly recommended to unplug the battery when not in use and store it in a
 - **Power Button** (located on the side of the device, near the corner)  
   Press to reset/power on. Double press to power off.
 - **Button 1** (located next to the screen, in the center)  
-  Plays The Bee Movie once, then puts the device to sleep to conserve battery.
+  Plays The Bee Movie once, then ~~puts the device to sleep~~ disables the screen backlight to conserve battery.
 - **Button 2** (located next to the screen, on top if the USB port is oriented upward)  
   Vertically flips the display.  
   *This button only works on the startup screen.
