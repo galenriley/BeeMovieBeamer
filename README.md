@@ -41,5 +41,9 @@ It is highly recommended to gently unplug the battery when not in use and store 
 
 - [LILYGO T4 v1.3 with 2.4 inch display](https://lilygo.cc/products/t4?variant=42405660393653)
 - 654065 3.7V Lipo Battery, 2000mAh, with JST GH 1. 25mm plug
+- [This micro USB cable fits the case perfectly](https://a.co/d/34nNxp7)
 - 1 inch nylon strap
 - tri-glide buckle
+
+## Instructions to Make Your Own
+TODO
