@@ -14,8 +14,8 @@ It is highly recommended to gently unplug the battery when not in use and store 
 
 ## Button Functions
 
-- **Power Button** (located on the side of the device, near the corner)  
-  Press to reset/power on. Double press to power off.
+- **Power Button** (located on the side of the device, near the USB port)  
+  Press to reset/power on and go to the startup screen. Double press to power off.
 - **Button 1** (located next to the screen, in the center)  
   Plays The Bee Movie once, then ~~puts the device to sleep~~ disables the screen backlight to conserve battery.
 - **Button 2** (located next to the screen, on top if the USB port is oriented upward)  
