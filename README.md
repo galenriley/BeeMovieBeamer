@@ -40,10 +40,24 @@ It is highly recommended to gently unplug the battery when not in use and store 
 ## Materials
 
 - [LILYGO T4 v1.3 with 2.4 inch display](https://lilygo.cc/products/t4?variant=42405660393653)
-- 654065 3.7V Lipo Battery, 2000mAh, with JST GH 1. 25mm plug
+- 654065 3.7V Lipo Battery, 2000mAh with JST GH 1. 25mm plug ([I used this one and soldered on the plug which came packaged with the LILYGO T4 board](https://www.amazon.com/dp/B07S75L945))
 - [This micro USB cable fits the case perfectly](https://a.co/d/34nNxp7)
 - 1 inch nylon strap
 - tri-glide buckle
 
 ## Instructions to Make Your Own
-TODO
+
+# Buliding the Software
+1. [Download and install Visual Studio Code](https://code.visualstudio.com/Download)
+2. Open Visual Studio Code and [install PlatformIO IDE](https://platformio.org/install/ide?install=vscode)
+3. [Download the project files from GitHub](https://github.com/galenriley/BeeMovieBeamer/archive/refs/heads/main.zip) and unzip somewhere on your computer.
+4. From Visual Studio Code, click the PlatformIO icon on the left sidebar (it looks like an ant's head).
+5. From the PlatformIO frame, click "Open Project" and navigate to the BeeMovieBeamer folder you unzipped earlier.
+6. Connect the LILYGO T4 board to your computer via the micro usb port.
+7. Near the bottom of Visual Studio Code, look for these icons. Mouse-over the Check icon, confirm the tooltip says "PlatformIO: Build", and click it.
+<img width="636" height="82" alt="image" src="https://github.com/user-attachments/assets/c13983f5-89c3-44b5-b37c-6d5abdc35b39" />
+8. After the Build process is complete, mouse over the Right Arrow icon, confirm the tooltip says "PlatformIO: Upload", and click it. Wait for the upload to complete and the board to reboot and show the software startup screen.
+
+# Fabricating the Box
+1. 
+
