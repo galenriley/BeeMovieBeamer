@@ -41,7 +41,7 @@ Most functions are accessible via the startup screen. If you're "lost" during op
  
 ## Materials
 
-- [LILYGO T4 v1.3 with 2.4 inch display](https://lilygo.cc/products/t4?variant=42405660393653) (Be sure to get the Q368 variant, the other is not compatible with the 3d printed case included in this project)
+- [LILYGO T4 v1.3 with 2.4 inch display](https://lilygo.cc/products/t4?variant=42405660393653) (Be sure to get the Q368 variant. The other is not compatible with the 3d printed case included in this project)
 - 654065 3.7V Lipo Battery, 2000mAh with JST GH 1.25mm plug ([I used this one and soldered on the plug which came packaged with the LILYGO T4 board](https://www.amazon.com/dp/B07S75L945))
 - [This micro USB cable fits the case perfectly](https://a.co/d/34nNxp7)
 - 1 inch nylon webbing strap and tri-glide buckle (or your own solution, elastic would also work)
