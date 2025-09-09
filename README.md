@@ -2,7 +2,7 @@
 
 A stupid gift for Junior  
 based on a [tiktok from @jacuto](https://www.tiktok.com/@jacuto/video/7439527807316790574?lang=en)  
-with help from Becca and Don
+with help from Becca and Don (who don't want to be linked to)
 
 ## Safety/Disclaimers
 
@@ -30,7 +30,7 @@ Most functions are accessible via the startup screen. If you're "lost" during op
   Resets the "Lifetime Bees Movied" counter on the startup screen.  
   Press once for conformation prompt. Press twice to reset the counter.  
   *This button only works on the startup screen.
-  The case allows access to this button using the provided sim ejector tool, or use a paperclip.
+  The case allows access to this button using a paperclip or sim ejector tool.
 
 ## Disassembly
   
@@ -65,10 +65,10 @@ You also need access to a computer to build and deploy the software, 3D printer(
 
 ### Fabricating the Bee Movie Beamer
 1. Find the 3D files in the project's "/case/" folder (you downloaded these already) and print using your preferred filament and settings. This is left as an exercise for the reader. (The case prints just fine with FDM, though the buttons are tiny and printing with resin would result in a better looking end product.)
-2. Sand/paint the parts as preferred. Note that the clearances around the buttons are tight and you may need to remove some material to achieve a final fit, especially around the power button on the side.
-3. Set the case on a stable surface and carefully position the buttons in their slots.
+2. Sand/paint/seal/finish the parts as preferred. Note: the clearances around the buttons are snug and you may need to sand away some material to achieve a final fit, especially around the power button on the side.
+3. Set the case on a stable surface and carefully position the buttons in their slots. Tweezers will come in handy.
 4. Place the board in the case and secure with 2x screws.
-5. If your battery didn't already have a 1.25mm plug, solder the one which came packaged with the board.
+5. If your battery didn't already have a 1.25mm plug, cut off the stock plug and solder the one which came packaged with the board. (Be careful! Do not let the wires touch when soldering.)
 6. Plug in the battery, route the cable around the battery tray while installing it (the tray is to isolate the battery from being punctured by the IO pins on the board, you could also snip these pins off), and install the back lid of the case.
 7. For the hand strap, feed the nylon webbing around the center bar of the triglide buckle and sew to itself.
 8. On the case, feed the hand strap from the front to the back through one buckle, across the back lid, from the back to the front through the other buckle, and through both gaps in the triglide. Adjust for your hand, cut to fit, then remove the strap to melt the raw end from fraying. Reinstall the strap.
