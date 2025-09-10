@@ -71,6 +71,6 @@ You also need access to a computer to build and deploy the software, 3D printer(
 5. If your battery didn't already have a 1.25mm plug, cut off the stock plug and solder the one which came packaged with the board. (Be careful! Do not let the wires touch when soldering.)
 6. Plug in the battery, route the cable around the battery tray while installing it (the tray is to isolate the battery from being punctured by the IO pins on the board, you could also snip these pins off), and install the back lid of the case.
 7. For the hand strap, feed the nylon webbing around the center bar of the triglide buckle and sew to itself.
-8. On the case, feed the hand strap from the front to the back through one buckle, across the back lid, from the back to the front through the other buckle, and through both gaps in the triglide. Adjust for your hand, cut to fit, then remove the strap to melt the raw end from fraying. Reinstall the strap.
+8. On the case, feed the hand strap from the front to the back through one buckle, across the back lid, from the back to the front through the other buckle, and through both slots in the triglide. Adjust for your hand, cut to fit, then remove the strap to melt the raw end from fraying. Reinstall the strap.
 
 Enjoy!
