@@ -41,8 +41,10 @@ Most functions are accessible via the startup screen. If you're "lost" during op
  
 ## Materials
 
-- [LILYGO T4 v1.3 with 2.4 inch display](https://lilygo.cc/products/t4?variant=42405660393653) (Be sure to get the Q368 variant. The other is not compatible with the 3d printed case included in this project)
-- 3.7V Lipo Batterywith JST GH 1.25mm plug, max dimensions 6.5mm x 40mm x 65mm ([I used this one and replaced the stock plug with one which came packaged with the LILYGO T4 board](https://www.amazon.com/dp/B07S75L945). You could buy a smaller battery with the right plug, and fill the leftover space in the case with some scrap foam to prevent it from rattling around.)
+- [LILYGO T4 v1.3 with 2.4 inch display](https://lilygo.cc/products/t4?variant=42405660393653)
+Be sure to get the Q368 variant. The other is not compatible with the 3d printed case included in this project.
+- 3.7V Lipo Batterywith JST GH 1.25mm plug, max dimensions 6.5mm x 40mm x 65mm
+[I used this one and replaced the stock plug with one which came packaged with the LILYGO T4 board](https://www.amazon.com/dp/B07S75L945). You could buy a smaller battery with the right plug, and fill the leftover space in the case with some scrap foam to prevent it from rattling around.
 - [This micro USB cable fits the case perfectly](https://a.co/d/34nNxp7)
 - 1 inch nylon webbing strap and tri-glide buckle (or your own solution, elastic would also work)
 - 2x M2 screws
@@ -64,11 +66,14 @@ You also need access to a computer to build and deploy the software, 3D printer(
 8. After the Build process is complete, mouse over the Right Arrow icon, confirm the tooltip says "PlatformIO: Upload", and click it. Wait for the upload to complete and the board to reboot and show the software startup screen.
 
 ### Fabricating the Bee Movie Beamer
-1. Find the 3D files in the project's "/case/" folder (you downloaded these already) and print using your preferred filament and settings. This is left as an exercise for the reader. (The case prints just fine with FDM, though the buttons are tiny and printing with resin would result in a better looking end product.)
-2. Sand/paint/seal/finish the parts as preferred. Note: the clearances around the buttons are snug and you may need to sand away some material to achieve a final fit, especially around the power button on the side.
+1. Find the 3D files in the project's "/case/" folder (you downloaded these already) and print using your preferred filament and settings. This is left as an exercise for the reader.
+The case prints just fine with FDM, though the buttons are tiny and printing with resin would result in a better looking end product.
+2. Sand/paint/seal/finish the parts as preferred.
+Note: The clearances around the buttons are snug and you may need to sand away some material to achieve a satisfactory final fit, especially around the power button on the side.
 3. Set the case on a stable surface and carefully position the buttons in their slots. Tweezers will come in handy.
 4. Place the board in the case and secure with 2x screws.
-5. If your battery didn't already have a 1.25mm plug, cut off the stock plug and solder the one which came packaged with the board. (Be careful! Do not let the wires touch when soldering.)
+5. If your battery didn't already have a 1.25mm plug, cut off the stock plug and solder the one which came packaged with the board.
+Safety warning: Do not let the wires touch when soldering, for explosion and fire and pain reasons.
 6. Plug in the battery, route the cable around the battery tray while installing it (the tray is to isolate the battery from being punctured by the IO pins on the board, you could also snip these pins off), and install the back lid of the case.
 7. For the hand strap, feed the nylon webbing around the center bar of the triglide buckle and sew to itself.
 8. On the case, feed the hand strap from the front to the back through one buckle, across the back lid, from the back to the front through the other buckle, and through both slots in the triglide. Adjust for your hand, cut to fit, then remove the strap to melt the raw end from fraying. Reinstall the strap.
