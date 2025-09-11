@@ -37,6 +37,7 @@ bool beamCountResetPrompt = false;
 // Note: no counting was done previous to 1/31 but the Bee Movie was certainly beamed a few dozen times during early development and testing and fuckin' around with it
 // - 2025/01/31: 27
 // - 2025/02/08: 61
+// - 2025/08/28: 5041 (after battery benchmarking, before gift presentation at DragonCon)
 
 // adapted from https://github.com/bitbank2/AnimatedGIF/blob/master/examples/TFT_eSPI_memory/GIFDraw.ino
 // added yOffset for setting vertical position
