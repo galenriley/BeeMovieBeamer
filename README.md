@@ -39,7 +39,7 @@ Most functions are accessible via the startup screen. If you're "lost" during op
 3. Remove the back panel by sliding it out.
 4. _Carefully_ lift the battery, slide out the battery tray, and unplug the battery cable.  
  
-## Materials
+## Bill of Materials
 
 - [LILYGO T4 v1.3 with 2.4 inch display](https://lilygo.cc/products/t4?variant=42405660393653)
 Be sure to get the Q368 variant. The other is not compatible with the 3d printed case included in this project.
