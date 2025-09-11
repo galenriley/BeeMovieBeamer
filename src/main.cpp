@@ -268,7 +268,13 @@ void incrementBeamCount()
 void sleep()
 {
     //tft.writecommand(ST7735_SLPIN);
-    esp_deep_sleep_start();
+
+    // Sleep disabled for now. See notes in setup() for more info.
+    // uncomment only this line and comment out two backlight lines below to re-enable sleep
+    //esp_deep_sleep_start();
+
+    tft.fillScreen(TFT_BLACK);
+    digitalWrite(TFT_BL, LOW); // disable TFT backlight
 }
 
 void flipDisplay()
@@ -428,7 +434,13 @@ void setup() {
     Serial.begin(115200);
     // delay(1000); // why is this delay here in every example?
 
-    esp_sleep_enable_ext1_wakeup(((uint64_t)(((uint64_t)1) << BUTTON_1)), ESP_EXT1_WAKEUP_ALL_LOW);
+    /*
+        TODO: Device eventually powers off when in deep sleep mode. No time to troubleshoot exactly why,
+        but requiring reboots at DragonCon is inconvenient. Commenting this out for now.
+
+        The good news is we have plenty of battery to just turn the screen off/on in lieu of lack of sleep
+    */ 
+    //esp_sleep_enable_ext1_wakeup(((uint64_t)(((uint64_t)1) << BUTTON_1)), ESP_EXT1_WAKEUP_ALL_LOW);
 
     if(getBatteryExists())
     {
@@ -482,7 +494,12 @@ void setup() {
     }
     else
     {
+        // Using backlight off/on instead of sleep
+        digitalWrite(TFT_BL, HIGH); // enable TFT backlight
+
         beeMovie();   
+
+        // Sleep disabled for now. See notes in setup() for more info.
         sleep();
     }
 }
@@ -492,36 +509,42 @@ void loop() {
     switch (state) {
     case 1:
         state = 0;
+
+        // reset state stuff
         pollBattery = false;
         beamCountResetPrompt = false;
+
+        // Using backlight off/on instead of sleep
+        digitalWrite(TFT_BL, HIGH); // enable TFT backlight
         
         beeMovie();
+
+        // Sleep disabled for now. See notes in setup() for more info.
         sleep();
 
         break;
     case 2:
         state = 0;
+
+        // reset state stuff
         pollBattery = false;
         beamCountResetPrompt = false;
-        /*
-        tft.setTextColor(TFT_GREEN, TFT_BLACK);
-        tft.fillScreen(TFT_BLACK);
-        tft.setTextDatum(MC_DATUM);
-        tft.drawString("Undefined function", tft.width() / 2, tft.height() / 2);
-        */
+
+        // Using backlight off/on instead of sleep
+        digitalWrite(TFT_BL, HIGH); // enable TFT backlight
+        
         flipDisplay();
 
         break;
     case 3:
         state = 0;
+
+        // reset state stuff
         pollBattery = false;
         beamCountResetPrompt = false;
-        /*
-        tft.setTextColor(TFT_GREEN, TFT_BLACK);
-        tft.fillScreen(TFT_BLACK);
-        tft.setTextDatum(MC_DATUM);
-        tft.drawString("Undefined function", tft.width() / 2, tft.height() / 2);
-        */
+
+        // Using backlight off/on instead of sleep
+        digitalWrite(TFT_BL, HIGH); // enable TFT backlight
 
         // infinite mode!
         while (true)
