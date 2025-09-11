@@ -79,3 +79,5 @@ Safety warning: Do not let the wires touch when soldering, for explosion and fir
 8. On the case, feed the hand strap from the front to the back through one buckle, across the back lid, from the back to the front through the other buckle, and through both slots in the triglide. Adjust for your hand, cut to fit, then remove the strap to melt the raw end from fraying. Reinstall the strap.
 
 Enjoy!
+
+PS If you make this dumb thing, please tag Instagram @thatgalen, so I can see your creation!
