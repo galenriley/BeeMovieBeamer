@@ -32,7 +32,7 @@ Most functions are accessible via the startup screen. If you're "lost" during op
   *This button only works on the startup screen.
   The case allows access to this button using a paperclip or sim ejector tool.
 
-## Disassembly
+## Disassembly for Safe Storage
   
 1. Remove the hand strap.
 2. Insert a fingernail or prying tool in the slots on the side of the case.
